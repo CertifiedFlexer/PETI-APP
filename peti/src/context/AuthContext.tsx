@@ -80,8 +80,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const response: AuthResponse = await loginRequest(email, password);
       
       // Guardar en estado y AsyncStorage
-      setToken(response.token);
-      setUser(response.user);
+      setToken(response.data.token);
+      setUser(response.data.name);
       await saveAuthData(response.token, response.user);
       
     } catch (error) {
