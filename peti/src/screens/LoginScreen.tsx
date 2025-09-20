@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { View, Image, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
 export default function LoginScreen() {
@@ -34,10 +34,11 @@ export default function LoginScreen() {
     );
   }
 
+
   return (
     <View style={styles.container}>
+      <Image source={require("../assets/images/logo.jpeg")} style={styles.logo} resizeMode="contain"/>
       <Text style={styles.title}>Iniciar Sesión</Text>
-      
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -56,12 +57,14 @@ export default function LoginScreen() {
         secureTextEntry
         autoComplete="password"
       />
-      
+      <View style={{ borderRadius: 10, overflow: "hidden" }}>
       <Button 
         title={isLoggingIn ? "Iniciando sesión..." : "Iniciar Sesión"} 
         onPress={handleLogin} 
+        color={"#39C7fD"}
         disabled={isLoggingIn || isLoading}
       />
+      </View>
     </View>
   );
 }
@@ -76,7 +79,7 @@ const styles = StyleSheet.create({
   },
   title: { 
     fontSize: 24, 
-    marginBottom: 30, 
+    marginBottom: 10, 
     color: "#000",
     fontWeight: "bold"
   },
@@ -89,5 +92,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15, 
     marginBottom: 15,
     backgroundColor: "#f9f9f9"
+  },
+  logo:{
+    width: 50,
+    height: 100,
+    marginBottom: 20
   }
 });

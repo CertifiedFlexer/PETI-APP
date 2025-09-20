@@ -8,13 +8,15 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bienvenido {user?.name || "Usuario"} 🚀</Text>
-      <Button title="Cerrar sesión" onPress={logout} />
+      <Text style={styles.title}>Bienvenido {user?.name || "Usuario"}</Text>
+      <View style={{ borderRadius: 20, overflow: "hidden" }}>
+      <Button color="#39C7fD" title="Cerrar sesión" onPress={logout} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
-  title: { fontSize: 24, marginBottom: 20, color: "#000" },
+  title: { fontSize: 24, marginBottom: 20, color: "#000" }
 });

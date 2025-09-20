@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { loginRequest } from '../api/auth'; // Asegúrate de tener esta ruta correcta
+import { loginRequest } from '../api/auth'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface User {
@@ -8,8 +8,13 @@ interface User {
 }
 
 interface AuthResponse {
-  token: string;
-  user: User;
+  success: string,
+  data: {
+    token:string,
+    id:string,
+    name:string,
+    email: string
+  }
 }
 
 interface AuthContextType {
@@ -81,8 +86,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       // Guardar en estado y AsyncStorage
       setToken(response.data.token);
-      setUser(response.data.name);
-      await saveAuthData(response.token, response.user);
+      setUser({name:response.data.name,
+        email:response.data.email
+      });
+      await saveAuthData(response.data.token, user || {name:"",
+        email:""
+      });
       
     } catch (error) {
       console.error('Login error:', error);
