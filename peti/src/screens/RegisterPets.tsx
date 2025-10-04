@@ -11,6 +11,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
 
 const PRIMARY = '#39C7fD';
 const INPUT_BG = '#f9f9f9';
@@ -35,6 +36,7 @@ export default function RegisterPetScreen({ route, navigation, userId: propUserI
     const [fechaNacimiento, setFechaNacimiento] = React.useState('');
     const [peso, setPeso] = React.useState('');
     const [loading, setLoading] = React.useState(false);
+    const { user } = React.useContext(AuthContext);
 
     const validate = () => {
         console.log('🔍 Validando campos:');
@@ -52,37 +54,13 @@ export default function RegisterPetScreen({ route, navigation, userId: propUserI
             Alert.alert('Error', 'Por favor ingresa la especie');
             return false;
         }
-        if (!raza.trim()) {
-            Alert.alert('Error', 'Por favor ingresa la raza');
-            return false;
-        }
-        if (!fechaNacimiento.trim()) {
-            Alert.alert('Error', 'Por favor ingresa la fecha de nacimiento');
-            return false;
-        }
-        if (!peso.trim()) {
-            Alert.alert('Error', 'Por favor ingresa el peso');
-            return false;
-        }
-
-        // Validar formato de fecha (YYYY-MM-DD o DD/MM/YYYY)
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$|^\d{2}\/\d{2}\/\d{4}$/;
-        if (!dateRegex.test(fechaNacimiento)) {
-            Alert.alert('Fecha inválida', 'Por favor usa el formato DD/MM/YYYY o YYYY-MM-DD');
-            return false;
-        }
-
-        // Validar que el peso sea un número
-        if (isNaN(Number(peso)) || Number(peso) <= 0) {
-            Alert.alert('Peso inválido', 'Por favor ingresa un peso válido en kg');
-            return false;
-        }
 
         return true;
     };
 
     const handleRegisterPet = async () => {
         console.log('🔵 Iniciando registro de mascota...');
+        console.log('user: ', user);
         console.log('Datos:', { nombre, especie, raza, fechaNacimiento, peso });
         
         if (!validate()) {
@@ -97,10 +75,10 @@ export default function RegisterPetScreen({ route, navigation, userId: propUserI
             const bodyData = {
                 nombre,
                 especie,
-                raza,
-                fecha_nacimiento: fechaNacimiento,
-                peso: Number(peso),
-                id_usuario: userId, // ID del usuario logueado
+                raza: raza || null,
+                fecha_nacimiento: fechaNacimiento || null,
+                peso: Number(peso) || null,
+                id_usuario: user?.userId
             };
             
             console.log('📤 Enviando datos:', bodyData);
@@ -120,7 +98,7 @@ export default function RegisterPetScreen({ route, navigation, userId: propUserI
             console.log('📥 Response data:', data);
 
             if (!response.ok) {
-                throw new Error(data.message || 'Error al registrar mascota');
+                throw new Error('Error al registrar mascota');
             }
 
             // Registro exitoso

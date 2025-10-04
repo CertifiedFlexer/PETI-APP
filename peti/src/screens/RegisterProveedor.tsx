@@ -11,11 +11,12 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { AuthContext } from "../context/AuthContext";
 
 const PRIMARY = "#39C7fD";
 const INPUT_BG = "#f9f9f9";
 const BORDER = "#ccc";
-const API_URL = "http://localhost:3000/api/business"; // Cambia según tu endpoint real
+const API_URL = "http://localhost:3000/api/providers"; // Cambia según tu endpoint real
 
 type RootStackParamList = {
     Main: undefined;
@@ -39,6 +40,7 @@ export default function RegisterBusinessScreen({
     const [telefono, setTelefono] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [loading, setLoading] = React.useState(false);
+    const { user } = React.useContext(AuthContext);
 
     // 🔍 Validaciones
     const validate = () => {
@@ -82,7 +84,7 @@ export default function RegisterBusinessScreen({
                 tipo_servicio: tipoServicio,
                 telefono,
                 email,
-                id_usuario: userId, // si necesitas relacionarlo con el usuario logueado
+                id_usuario: user?.userId
             };
 
             const response = await fetch(API_URL, {
@@ -94,7 +96,7 @@ export default function RegisterBusinessScreen({
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.message || "Error al registrar el negocio");
+                throw new Error("Error al registrar el negocio");
             }
 
             Alert.alert("Éxito", "El negocio ha sido registrado correctamente", [
