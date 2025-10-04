@@ -1,11 +1,14 @@
-import React from "react";
-import { AuthProvider, useAuth } from "../src/context/AuthContext";
-import LoginScreen from "../src/screens/LoginScreen";
-import HomeScreen from "../src/screens/HomeScreen";
-import ProfileScreen from "@/src/screens/ProfileScreen";
-import { ActivityIndicator, View, Text } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import React from "react";
+import { ActivityIndicator, Text, View } from "react-native";
+
+import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import HomeScreen from "../src/screens/HomeScreen";
+import LoginScreen from "../src/screens/LoginScreen";
+import ProfileScreen from "../src/screens/ProfileScreen";
+import RegisterPets from "../src/screens/RegisterPets";
+import RegisterProveedor from "../src/screens/RegisterProveedor";
 
 const Tab = createBottomTabNavigator();
 
@@ -15,8 +18,8 @@ function AppContent() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-        <Text>Cargando aplicación...</Text>
+        <ActivityIndicator size="large" color="#079DC3" />
+        <Text style={{ marginTop: 10 }}>Cargando aplicación...</Text>
       </View>
     );
   }
@@ -36,6 +39,10 @@ function AppContent() {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline";
+          } else if (route.name === "RegisterPet") {
+            iconName = focused ? "paw" : "paw-outline";
+          } else if (route.name === "RegisterProveedor") {
+            iconName = focused ? "briefcase" : "briefcase-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -46,6 +53,8 @@ function AppContent() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="RegisterPet" component={RegisterPets} options={{ title: 'Registrar Mascota' }} />
+      <Tab.Screen name="RegisterProveedor" component={RegisterProveedor} options={{ title: 'Registrar Proveedor' }} />
     </Tab.Navigator>
   );
 }
