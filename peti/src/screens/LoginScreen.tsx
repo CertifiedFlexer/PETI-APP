@@ -1,8 +1,12 @@
 import React, { useState } from "react";
-import { View, Image, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator } from "react-native";
+import { View, Image, Text, TextInput, Button, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import RegisterScreen from "./RegisterScreen";
+
+const PRIMARY = '#39C7fD';
 
 export default function LoginScreen() {
+  const [showRegister, setShowRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -33,7 +37,18 @@ export default function LoginScreen() {
       </View>
     );
   }
-
+  if (showRegister) {
+    return (
+      <View style={{ flex: 1 }}>
+        <View style={{ padding: 12, backgroundColor: '#fff' }}>
+          <TouchableOpacity onPress={() => setShowRegister(false)}>
+            <Text style={{ color: '#39C7fD', fontWeight: '600' }}>{'<'} Volver</Text>
+          </TouchableOpacity>
+        </View>
+        <RegisterScreen />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -57,7 +72,7 @@ export default function LoginScreen() {
         secureTextEntry
         autoComplete="password"
       />
-      <View style={{ borderRadius: 10, overflow: "hidden" }}>
+      <View style={{ borderRadius: 10, overflow: "hidden", width: '100%' }}>
       <Button 
         title={isLoggingIn ? "Iniciando sesión..." : "Iniciar Sesión"} 
         onPress={handleLogin} 
@@ -65,6 +80,10 @@ export default function LoginScreen() {
         disabled={isLoggingIn || isLoading}
       />
       </View>
+
+      <TouchableOpacity onPress={() => setShowRegister(true)} style={styles.registerLink}>
+        <Text style={styles.registerText}>¿No tienes cuenta? Regístrate</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -97,5 +116,13 @@ const styles = StyleSheet.create({
     width: 50,
     height: 100,
     marginBottom: 20
+  }
+  ,
+  registerLink: {
+    marginTop: 16,
+  },
+  registerText: {
+    color: PRIMARY,
+    fontWeight: '600',
   }
 });
