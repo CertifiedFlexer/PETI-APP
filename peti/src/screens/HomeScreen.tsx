@@ -1,17 +1,18 @@
 // src/screens/HomeScreen.tsx
-import React, { useContext } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, StatusBar } from "react-native";
-import { AuthContext } from "../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import React, { useContext } from "react";
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { AuthContext } from "../context/AuthContext";
 
 const PRIMARY = '#39C7fD';
 
 const options = [
-  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#FF6B9D', bg: '#FFF0F5' },
+  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#2196F3', bg: '#FFF0F5' },
   { key: 'vets', label: 'Veterinarias', icon: 'medical', color: '#4CAF50', bg: '#F1F8F4' },
   { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#FF9800', bg: '#FFF8F0' },
   { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#2196F3', bg: '#F0F7FF' },
-  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#9C27B0', bg: '#F8F0FF' },
+  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#4CAF50', bg: '#F8F0FF' },
+  // { key: 'register-pet', label: 'Registrar Mascota', icon: 'paw', color: '#FF9800', bg: '#F1F8F4' },
 ];
 
 export default function HomeScreen() {
@@ -21,12 +22,20 @@ export default function HomeScreen() {
     Alert.alert(label, `Mostrar lista de ${label}`);
   };
 
+  // const onBecomeProvider = () => {
+  //   Alert.alert('Sé un proveedor', '¿Deseas registrarte como proveedor de servicios?');
+  // };
+
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="dark-content" />
       
-      {/* Header mejorado */}
-      <View style={styles.headerContainer}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header mejorado */}
+        <View style={styles.headerContainer}>
         <View>
           <Text style={styles.greeting}>Hola 👋</Text>
           <Text style={styles.welcome}>{user?.name || 'Usuario'}</Text>
@@ -66,10 +75,29 @@ export default function HomeScreen() {
         ))}
       </View>
 
-      {/* Decoración inferior */}
-      <View style={styles.bottomDecor}>
-        <Text style={styles.bottomText}>Cuidando de tu mascota 🐾</Text>
-      </View>
+      {/* Sección para administradores */}
+      {/* <View style={styles.adminSection}>
+        <Text style={styles.adminTitle}>¿Eres administrador? Cómo podemos ayudarte:</Text>
+        
+        <TouchableOpacity
+          style={styles.providerCard}
+          activeOpacity={0.85}
+          onPress={onBecomeProvider}
+        >
+          <View style={styles.providerContent}>
+            <View style={styles.providerIconWrap}>
+              <Ionicons name="briefcase" size={28} color="#fff" />
+            </View>
+            <View style={styles.providerTextContent}>
+              <Text style={styles.providerTitle}>Sé un proveedor</Text>
+              <Text style={styles.providerSubtitle}>Ofrece tus servicios en nuestra plataforma</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={PRIMARY} />
+          </View>
+        </TouchableOpacity>
+              </View> */}
+      </ScrollView>
+
     </View>
   );
 }
@@ -77,8 +105,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { 
     flex: 1, 
-    backgroundColor: '#F8F9FD', 
+    backgroundColor: '#F8F9FD',
+  },
+  scrollContent: {
     paddingTop: 50,
+    paddingBottom: 80,
   },
   headerContainer: { 
     flexDirection: 'row', 
@@ -178,6 +209,54 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  adminSection: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  adminTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4A5568',
+    marginBottom: 12,
+  },
+  providerCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5,
+  },
+  providerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  providerIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: PRIMARY,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  providerTextContent: {
+    flex: 1,
+  },
+  providerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  providerSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '500',
   },
   bottomDecor: {
     position: 'absolute',
