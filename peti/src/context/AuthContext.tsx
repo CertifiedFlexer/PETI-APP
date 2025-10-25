@@ -1,10 +1,11 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { loginRequest } from '../api/auth'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, ReactNode, useEffect, useState } from 'react';
+import { loginRequest } from '../api/auth';
 
 interface User {
   name: string;
   email: string;
+  userId: string;
 }
 
 interface AuthResponse {
@@ -79,20 +80,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
       const response: AuthResponse = await loginRequest(email, password);
-      
+
       // Guardar en estado y AsyncStorage
       setToken(response.data.token);
       setUser({name:response.data.name,
-        email:response.data.email
+        email:response.data.email,
+        userId: response.data.id
       });
       await saveAuthData(response.data.token, user || {name:"",
-        email:""
+        email:"",
+        userId: ""
       });
-      
+
     } catch (error) {
       console.error('Login error:', error);
       throw error;
