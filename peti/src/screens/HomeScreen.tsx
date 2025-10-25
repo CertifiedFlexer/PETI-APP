@@ -12,7 +12,6 @@ const options = [
   { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#FF9800', bg: '#FFF8F0' },
   { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#2196F3', bg: '#F0F7FF' },
   { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#4CAF50', bg: '#F8F0FF' },
-  // { key: 'register-pet', label: 'Registrar Mascota', icon: 'paw', color: '#FF9800', bg: '#F1F8F4' },
 ];
 
 export default function HomeScreen() {
@@ -22,9 +21,15 @@ export default function HomeScreen() {
     Alert.alert(label, `Mostrar lista de ${label}`);
   };
 
-  // const onBecomeProvider = () => {
-  //   Alert.alert('Sé un proveedor', '¿Deseas registrarte como proveedor de servicios?');
-  // };
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // La navegación al login se hará automáticamente cuando token = null
+    } catch (error) {
+      console.error('❌ Error al cerrar sesión:', error);
+      Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -40,7 +45,7 @@ export default function HomeScreen() {
           <Text style={styles.greeting}>Hola 👋</Text>
           <Text style={styles.welcome}>{user?.name || 'Usuario'}</Text>
         </View>
-        <TouchableOpacity onPress={logout} activeOpacity={0.7}>
+        <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
           <View style={styles.logoutIconWrap}>
             <Ionicons name="log-out-outline" size={22} color={PRIMARY} />
           </View>
@@ -74,28 +79,6 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
       </View>
-
-      {/* Sección para administradores */}
-      {/* <View style={styles.adminSection}>
-        <Text style={styles.adminTitle}>¿Eres administrador? Cómo podemos ayudarte:</Text>
-        
-        <TouchableOpacity
-          style={styles.providerCard}
-          activeOpacity={0.85}
-          onPress={onBecomeProvider}
-        >
-          <View style={styles.providerContent}>
-            <View style={styles.providerIconWrap}>
-              <Ionicons name="briefcase" size={28} color="#fff" />
-            </View>
-            <View style={styles.providerTextContent}>
-              <Text style={styles.providerTitle}>Sé un proveedor</Text>
-              <Text style={styles.providerSubtitle}>Ofrece tus servicios en nuestra plataforma</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={PRIMARY} />
-          </View>
-        </TouchableOpacity>
-              </View> */}
       </ScrollView>
 
     </View>
@@ -209,65 +192,5 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  adminSection: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  adminTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4A5568',
-    marginBottom: 12,
-  },
-  providerCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5,
-  },
-  providerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  providerIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: PRIMARY,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  providerTextContent: {
-    flex: 1,
-  },
-  providerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  providerSubtitle: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  bottomDecor: {
-    position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  bottomText: {
-    fontSize: 14,
-    color: '#999',
-    fontWeight: '500',
   },
 });

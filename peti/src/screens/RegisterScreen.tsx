@@ -1,14 +1,14 @@
 import * as React from 'react';
 import {
-    View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TextInput,
-    StyleSheet,
     TouchableOpacity,
-    Alert,
-    Platform,
-    KeyboardAvoidingView,
-    ScrollView,
+    View,
 } from 'react-native';
 
 const PRIMARY = '#39C7fD';
@@ -74,7 +74,7 @@ export default function RegisterScreen() {
 
             console.log('📥 Response status:', response.status);
             
-            const data = await response.json();
+            const data = (await response.json()) as { message?: string };
             console.log('📥 Response data:', data);
 
             if (!response.ok) {

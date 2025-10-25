@@ -16,20 +16,16 @@ import { AuthContext } from '../context/AuthContext';
 const PRIMARY = '#39C7fD';
 const INPUT_BG = '#f9f9f9';
 const BORDER = '#ccc';
-const API_URL = 'http://localhost:3000/api/pets'; // Ajusta según tu API
+const API_URL = 'http://localhost:3000/api/pets';
 
 type RootStackParamList = {
     Main: undefined;
     RegisterPet: { userId?: string } | undefined;
 };
 
-type Props = {
-    userId?: string; // compatibilidad si se pasa como prop
-} & NativeStackScreenProps<RootStackParamList, 'RegisterPet'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'RegisterPet'>;
 
-export default function RegisterPetScreen({ route, navigation, userId: propUserId }: Props) {
-    const routeUserId = route?.params?.userId;
-    const userId = routeUserId ?? propUserId;
+export default function RegisterPetScreen(_props: Props) {
     const [nombre, setNombre] = React.useState('');
     const [especie, setEspecie] = React.useState('');
     const [raza, setRaza] = React.useState('');
@@ -93,15 +89,11 @@ export default function RegisterPetScreen({ route, navigation, userId: propUserI
             });
 
             console.log('📥 Response status:', response.status);
-            
-            const data = await response.json();
-            console.log('📥 Response data:', data);
 
             if (!response.ok) {
                 throw new Error('Error al registrar mascota');
             }
 
-            // Registro exitoso
             console.log('✅ Registro de mascota exitoso');
             Alert.alert(
                 'Éxito',
