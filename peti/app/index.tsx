@@ -4,11 +4,9 @@ import React from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import HomeStackNavigator from "../src/navigation/HomeStackNavigator";
 import ProfileStackNavigator from "../src/navigation/ProfileStackNavigator";
-import HomeScreen from "../src/screens/HomeScreen";
 import LoginScreen from "../src/screens/LoginScreen";
-import RegisterPets from "../src/screens/RegisterPets";
-import RegisterProveedor from "../src/screens/RegisterProveedor";
 
 const Tab = createBottomTabNavigator();
 
@@ -51,10 +49,16 @@ function AppContent() {
         tabBarInactiveTintColor: "#079DC3",
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileStackNavigator} />
-      <Tab.Screen name="RegisterPet" component={RegisterPets} options={{ title: 'Registrar Mascota' }} />
-      <Tab.Screen name="RegisterProveedor" component={RegisterProveedor} options={{ title: 'Registrar Proveedor' }} />
+      <Tab.Screen 
+        name="Home" 
+        component={HomeStackNavigator}
+        options={{ tabBarLabel: "Inicio" }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileStackNavigator}
+        options={{ tabBarLabel: "Perfil" }}
+      />
     </Tab.Navigator>
   );
 }
