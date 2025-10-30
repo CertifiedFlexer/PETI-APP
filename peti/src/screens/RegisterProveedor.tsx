@@ -14,27 +14,17 @@ import {
 import { AuthContext } from "../context/AuthContext";
 
 const PRIMARY = "#39C7fD";
-const INPUT_BG = "#f9f9f9";
 const BORDER = "#ccc";
-const API_URL = "http://localhost:3000/api/providers"; // Cambia según tu endpoint real
+const API_URL = "http://localhost:3000/api/providers";
 
 type RootStackParamList = {
     Main: undefined;
-    RegisterBusiness: { userId?: string } | undefined;
+    RegisterProveedor: { userId?: string } | undefined;
 };
 
-type Props = {
-    userId?: string;
-} & NativeStackScreenProps<RootStackParamList, "RegisterBusiness">;
+type Props = NativeStackScreenProps<RootStackParamList, "RegisterProveedor">;
 
-export default function RegisterBusinessScreen({
-    route,
-    navigation,
-    userId: propUserId,
-}: Props) {
-    const routeUserId = route?.params?.userId;
-    const userId = routeUserId ?? propUserId;
-
+export default function RegisterBusinessScreen(_props: Props) {
     const [nombreNegocio, setNombreNegocio] = React.useState("");
     const [tipoServicio, setTipoServicio] = React.useState("");
     const [telefono, setTelefono] = React.useState("");
@@ -42,7 +32,6 @@ export default function RegisterBusinessScreen({
     const [loading, setLoading] = React.useState(false);
     const { user } = React.useContext(AuthContext);
 
-    // 🔍 Validaciones
     const validate = () => {
         if (!nombreNegocio.trim()) {
             Alert.alert("Error", "Por favor ingresa el nombre del negocio");
@@ -73,7 +62,6 @@ export default function RegisterBusinessScreen({
         return true;
     };
 
-    // 🚀 Enviar datos a la API
     const handleRegisterBusiness = async () => {
         if (!validate()) return;
 
@@ -92,8 +80,6 @@ export default function RegisterBusinessScreen({
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(bodyData),
             });
-
-            const data = await response.json();
 
             if (!response.ok) {
                 throw new Error("Error al registrar el negocio");
@@ -217,7 +203,7 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 48,
-        backgroundColor: INPUT_BG,
+        backgroundColor: "#f9f9f9",
         borderRadius: 12,
         paddingHorizontal: 14,
         borderWidth: 1,

@@ -8,22 +8,13 @@ interface User {
   userId: string;
 }
 
-interface AuthResponse {
-  success: string,
-  data: {
-    token:string,
-    id:string,
-    name:string,
-    email: string
-  }
-}
-
 interface AuthContextType {
   token: string | null;
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -31,7 +22,8 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   isLoading: true,
   login: async () => {},
-  logout: () => {},
+  logout: async () => {},
+  updateUser: async () => {},
 });
 
 interface AuthProviderProps {
@@ -80,21 +72,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const response: AuthResponse = await loginRequest(email, password);
+      const response = await loginRequest(email, password);
+
+      const newUser = {
+        name: response.data.name,
+        email: response.data.email,
+        userId: response.data.id
+      };
 
       // Guardar en estado y AsyncStorage
       setToken(response.data.token);
-      setUser({name:response.data.name,
-        email:response.data.email,
-        userId: response.data.id
-      });
-      await saveAuthData(response.data.token, user || {name:"",
-        email:"",
-        userId: ""
-      });
+      setUser(newUser);
+      await saveAuthData(response.data.token, newUser);
 
     } catch (error) {
       console.error('Login error:', error);
@@ -111,6 +103,20 @@ const login = async (email: string, password: string) => {
       await clearAuthData();
     } catch (error) {
       console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const updateUser = async (userData: Partial<User>) => {
+    try {
+      if (user && token) {
+        const updatedUser = { ...user, ...userData };
+        setUser(updatedUser);
+        await saveAuthData(token, updatedUser);
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
     }
   };
 
@@ -124,7 +130,8 @@ const login = async (email: string, password: string) => {
       user, 
       isLoading, 
       login, 
-      logout 
+      logout,
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>

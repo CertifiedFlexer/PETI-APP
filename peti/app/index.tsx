@@ -4,9 +4,9 @@ import React from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import ProfileStackNavigator from "../src/navigation/ProfileStackNavigator";
 import HomeScreen from "../src/screens/HomeScreen";
 import LoginScreen from "../src/screens/LoginScreen";
-import ProfileScreen from "../src/screens/ProfileScreen";
 import RegisterPets from "../src/screens/RegisterPets";
 import RegisterProveedor from "../src/screens/RegisterProveedor";
 
@@ -52,7 +52,7 @@ function AppContent() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Profile" component={ProfileStackNavigator} />
       <Tab.Screen name="RegisterPet" component={RegisterPets} options={{ title: 'Registrar Mascota' }} />
       <Tab.Screen name="RegisterProveedor" component={RegisterProveedor} options={{ title: 'Registrar Proveedor' }} />
     </Tab.Navigator>
