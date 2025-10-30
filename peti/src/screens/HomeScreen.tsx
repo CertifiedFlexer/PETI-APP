@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React, { useContext } from "react";
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -7,28 +6,30 @@ import { AuthContext } from "../context/AuthContext";
 const PRIMARY = '#39C7fD';
 
 const options = [
-  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#2196F3', bg: '#FFF0F5' },
-  { key: 'vets', label: 'Veterinarias', icon: 'medical', color: '#4CAF50', bg: '#F1F8F4' },
-  { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#FF9800', bg: '#FFF8F0' },
-  { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#2196F3', bg: '#F0F7FF' },
-  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#4CAF50', bg: '#F8F0FF' },
+  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#2196F3', bg: '#FFF0F5', navigateTo: 'Stores' },
+  { key: 'vets', label: 'Veterinarias', icon: 'medical', color: '#4CAF50', bg: '#F1F8F4', navigateTo: 'Vets' },
+  { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#FF9800', bg: '#FFF8F0', navigateTo: 'Groomers' },
+  { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#2196F3', bg: '#F0F7FF', navigateTo: 'Walkers' },
+  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#4CAF50', bg: '#F8F0FF', navigateTo: 'Insurance' },
+  { key: 'RegisterProveedor', label: 'Registrar Proveedor', icon: 'briefcase', color: '#FF5722', bg: '#FFF4E5', navigateTo: 'RegisterProveedor' },
+  { key: 'RegisterPet', label: 'Registrar Mascota', icon: 'paw', color: '#9C27B0', bg: '#F5E8FF', navigateTo: 'RegisterPet' },
 ];
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }: any) {
   const { user, logout } = useContext(AuthContext);
-
-  const onSelect = (label: string) => {
-    Alert.alert(label, `Mostrar lista de ${label}`);
-  };
 
   const handleLogout = async () => {
     try {
       await logout();
-      // La navegación al login se hará automáticamente cuando token = null
     } catch (error) {
       console.error('❌ Error al cerrar sesión:', error);
       Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
     }
+  };
+
+  const onSelect = (option: typeof options[0]) => {
+    // Navegación directa al screen correspondiente
+    navigation.navigate(option.navigateTo);
   };
 
   return (
@@ -39,48 +40,47 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header mejorado */}
+        {/* Header */}
         <View style={styles.headerContainer}>
-        <View>
-          <Text style={styles.greeting}>Hola 👋</Text>
-          <Text style={styles.welcome}>{user?.name || 'Usuario'}</Text>
-        </View>
-        <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
-          <View style={styles.logoutIconWrap}>
-            <Ionicons name="log-out-outline" size={22} color={PRIMARY} />
+          <View>
+            <Text style={styles.greeting}>Hola 👋</Text>
+            <Text style={styles.welcome}>{user?.name || 'Usuario'}</Text>
           </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* Subtitle con decoración */}
-      <View style={styles.subtitleContainer}>
-        <Text style={styles.subtitle}>¿En qué podemos ayudarte hoy?</Text>
-        <View style={styles.decorativeLine} />
-      </View>
-
-      {/* Grid mejorado */}
-      <View style={styles.grid}>
-        {options.map((opt) => (
-          <TouchableOpacity
-            key={opt.key}
-            style={styles.cardWrapper}
-            activeOpacity={0.85}
-            onPress={() => onSelect(opt.label)}
-          >
-            <View style={[styles.card, { backgroundColor: opt.bg }]}>
-              <View style={[styles.iconWrap, { backgroundColor: opt.color }]}>
-                <Ionicons name={opt.icon as any} size={32} color="#fff" />
-              </View>
-              <Text style={styles.cardLabel}>{opt.label}</Text>
-              <View style={[styles.cardArrow, { backgroundColor: opt.color + '20' }]}>
-                <Ionicons name="arrow-forward" size={16} color={opt.color} />
-              </View>
+          <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
+            <View style={styles.logoutIconWrap}>
+              <Ionicons name="log-out-outline" size={22} color={PRIMARY} />
             </View>
           </TouchableOpacity>
-        ))}
-      </View>
-      </ScrollView>
+        </View>
 
+        {/* Subtitle */}
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitle}>¿En qué podemos ayudarte hoy?</Text>
+          <View style={styles.decorativeLine} />
+        </View>
+
+        {/* Grid de opciones */}
+        <View style={styles.grid}>
+          {options.map((opt) => (
+            <TouchableOpacity
+              key={opt.key}
+              style={styles.cardWrapper}
+              activeOpacity={0.85}
+              onPress={() => onSelect(opt)}
+            >
+              <View style={[styles.card, { backgroundColor: opt.bg }]}>
+                <View style={[styles.iconWrap, { backgroundColor: opt.color }]}>
+                  <Ionicons name={opt.icon as any} size={32} color="#fff" />
+                </View>
+                <Text style={styles.cardLabel}>{opt.label}</Text>
+                <View style={[styles.cardArrow, { backgroundColor: opt.color + '20' }]}>
+                  <Ionicons name="arrow-forward" size={16} color={opt.color} />
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
