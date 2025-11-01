@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import AppointmentModal from "../components/AppointmentModal";
 
 interface Provider {
     id: string;
@@ -58,6 +59,7 @@ const PROVIDERS: Provider[] = [
 export default function StoresScreen({ navigation }: any) {
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
+    const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
 
     const openDetail = (provider: Provider) => {
         setSelectedProvider(provider);
@@ -67,6 +69,15 @@ export default function StoresScreen({ navigation }: any) {
     const closeDetail = () => {
         setModalVisible(false);
         setTimeout(() => setSelectedProvider(null), 300);
+    };
+
+    const openAppointmentModal = () => {
+        setModalVisible(false);
+        setTimeout(() => setAppointmentModalVisible(true), 300);
+    };
+
+    const closeAppointmentModal = () => {
+        setAppointmentModalVisible(false);
     };
 
     return (
@@ -159,12 +170,35 @@ export default function StoresScreen({ navigation }: any) {
                                             <Text style={styles.infoText}>{selectedProvider.address}</Text>
                                         </View>
                                     </View>
+
+                                    {/* Botón Agendar Cita */}
+                                    <TouchableOpacity
+                                        style={styles.appointmentButton}
+                                        onPress={openAppointmentModal}
+                                        activeOpacity={0.8}
+                                    >
+                                        <Ionicons name="calendar" size={22} color="#fff" />
+                                        <Text style={styles.appointmentButtonText}>Agendar Cita</Text>
+                                    </TouchableOpacity>
                                 </View>
                             </ScrollView>
                         )}
                     </View>
                 </View>
             </Modal>
+
+            {/* Modal de Agendar Cita */}
+            {selectedProvider && (
+                <AppointmentModal
+                    visible={appointmentModalVisible}
+                    onClose={closeAppointmentModal}
+                    provider={{
+                        id: selectedProvider.id,
+                        name: selectedProvider.name,
+                        category: selectedProvider.category
+                    }}
+                />
+            )}
         </View>
     );
 }
@@ -342,5 +376,25 @@ const styles = StyleSheet.create({
         color: "#1A1A1A",
         marginLeft: 12,
         flex: 1,
+    },
+    appointmentButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#4CAF50",
+        paddingVertical: 16,
+        borderRadius: 12,
+        marginTop: 24,
+        gap: 8,
+        shadowColor: "#4CAF50",
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+    },
+    appointmentButtonText: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#fff",
     },
 });
