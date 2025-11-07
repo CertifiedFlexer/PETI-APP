@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Image,
     Modal,
@@ -9,57 +9,46 @@ import {
     Text,
     TouchableOpacity,
     View,
+    ActivityIndicator
 } from "react-native";
 import AppointmentModal from "../components/AppointmentModal";
 
 interface Provider {
-    id: string;
+    id_proveedor: string;
+    nombre_negocio: string;
+    tipo_servicio: string;
+    telefono: string;
+    email: string;
+    descripcion: string;
     image: string;
-    name: string;
-    category: string;
-    description: string;
-    rating: number;
-    phone: string;
-    address: string;
+    puntuacion: number;
+    direccion: string ;
 }
 
-const PROVIDERS: Provider[] = [
-    {
-        id: "1",
-        image: "https://picsum.photos/400/250?random=201",
-        name: "Clínica Veterinaria San Francisco",
-        category: "Veterinaria",
-        description: "Atención médica integral para tu mascota. Contamos con servicios de emergencias 24/7, cirugías y hospitalización.",
-        rating: 4.9,
-        phone: "+57 304 111 2222",
-        address: "Calle 10 #50-30, Medellín",
-    },
-    {
-        id: "2",
-        image: "https://picsum.photos/400/250?random=202",
-        name: "VetCare Especialistas",
-        category: "Veterinaria",
-        description: "Médicos veterinarios especializados en diferentes áreas. Laboratorio clínico, ecografías y radiografías digitales.",
-        rating: 4.7,
-        phone: "+57 305 222 3333",
-        address: "Carrera 43A #16-50, Medellín",
-    },
-    {
-        id: "3",
-        image: "https://picsum.photos/400/250?random=203",
-        name: "Centro Médico Animal",
-        category: "Veterinaria",
-        description: "Clínica veterinaria con más de 15 años de experiencia. Vacunación, desparasitación y planes de salud preventiva.",
-        rating: 4.6,
-        phone: "+57 306 333 4444",
-        address: "Avenida El Poblado #14-25, Medellín",
-    },
-];
-
-export default function VetsScreen({ navigation }: any) {
+export default function WalkersScreen({ navigation }: any) {
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/providers/service/Veterinaria")
+        const json = await response.json();
+        setData(json as any[]);
+      } catch (error) {
+        console.log("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <ActivityIndicator />;
 
     const openDetail = (provider: Provider) => {
         setSelectedProvider(provider);
@@ -88,7 +77,7 @@ export default function VetsScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Veterinarias</Text>
+                <Text style={styles.headerTitle}>Paseadores</Text>
                 <View style={styles.placeholder} />
             </View>
 
@@ -96,9 +85,9 @@ export default function VetsScreen({ navigation }: any) {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {PROVIDERS.map((provider) => (
+                {data.map((provider) => (
                     <TouchableOpacity
-                        key={provider.id}
+                        key={provider.provider_id}
                         style={styles.card}
                         activeOpacity={0.9}
                         onPress={() => openDetail(provider)}
@@ -106,15 +95,15 @@ export default function VetsScreen({ navigation }: any) {
                         <Image source={{ uri: provider.image }} style={styles.cardImage} />
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
-                                <Text style={styles.cardName}>{provider.name}</Text>
+                                <Text style={styles.cardName}>{provider.nombre_negocio}</Text>
                                 <View style={styles.ratingContainer}>
                                     <Ionicons name="star" size={16} color="#FFB800" />
-                                    <Text style={styles.ratingText}>{provider.rating}</Text>
+                                    <Text style={styles.ratingText}>{provider.puntuacion}</Text>
                                 </View>
                             </View>
-                            <Text style={styles.cardCategory}>{provider.category}</Text>
+                            <Text style={styles.cardCategory}>{provider.tipo_servicio}</Text>
                             <Text style={styles.cardDescription} numberOfLines={2}>
-                                {provider.description}
+                                {provider.descripcion}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -140,31 +129,31 @@ export default function VetsScreen({ navigation }: any) {
                                     style={styles.modalImage}
                                 />
                                 <View style={styles.modalBody}>
-                                    <Text style={styles.modalName}>{selectedProvider.name}</Text>
-                                    <Text style={styles.modalCategory}>{selectedProvider.category}</Text>
+                                    <Text style={styles.modalName}>{selectedProvider.nombre_negocio}</Text>
+                                    <Text style={styles.modalCategory}>{selectedProvider.tipo_servicio}</Text>
 
                                     <View style={styles.modalRating}>
                                         <Ionicons name="star" size={20} color="#FFB800" />
-                                        <Text style={styles.modalRatingText}>{selectedProvider.rating}</Text>
-                                        <Text style={styles.modalRatingSubtext}>(200+ reseñas)</Text>
+                                        <Text style={styles.modalRatingText}>{selectedProvider.puntuacion}</Text>
+                                        <Text style={styles.modalRatingSubtext}>(120+ reseñas)</Text>
                                     </View>
 
                                     <View style={styles.section}>
                                         <Text style={styles.sectionTitle}>Descripción</Text>
-                                        <Text style={styles.sectionText}>{selectedProvider.description}</Text>
+                                        <Text style={styles.sectionText}>{selectedProvider.descripcion}</Text>
                                     </View>
 
                                     <View style={styles.section}>
                                         <View style={styles.infoRow}>
-                                            <Ionicons name="call" size={20} color="#4CAF50" />
-                                            <Text style={styles.infoText}>{selectedProvider.phone}</Text>
+                                            <Ionicons name="call" size={20} color="#2196F3" />
+                                            <Text style={styles.infoText}>{selectedProvider.telefono}</Text>
                                         </View>
                                     </View>
 
                                     <View style={styles.section}>
                                         <View style={styles.infoRow}>
-                                            <Ionicons name="location" size={20} color="#4CAF50" />
-                                            <Text style={styles.infoText}>{selectedProvider.address}</Text>
+                                            <Ionicons name="location" size={20} color="#2196F3" />
+                                            <Text style={styles.infoText}>{selectedProvider.direccion || "No disponible"}</Text>
                                         </View>
                                     </View>
 
@@ -188,9 +177,9 @@ export default function VetsScreen({ navigation }: any) {
                     visible={appointmentModalVisible}
                     onClose={closeAppointmentModal}
                     provider={{
-                        id: selectedProvider.id,
-                        name: selectedProvider.name,
-                        category: selectedProvider.category
+                        id: selectedProvider.id_proveedor,
+                        name: selectedProvider.nombre_negocio,
+                        category: selectedProvider.tipo_servicio
                     }}
                 />
             )}
@@ -279,7 +268,7 @@ const styles = StyleSheet.create({
     },
     cardCategory: {
         fontSize: 14,
-        color: "#4CAF50",
+        color: "#2196F3",
         fontWeight: "600",
         marginBottom: 8,
     },
@@ -328,7 +317,7 @@ const styles = StyleSheet.create({
     },
     modalCategory: {
         fontSize: 16,
-        color: "#4CAF50",
+        color: "#2196F3",
         fontWeight: "600",
         marginBottom: 12,
     },

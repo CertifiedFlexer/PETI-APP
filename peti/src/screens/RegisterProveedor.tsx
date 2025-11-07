@@ -29,6 +29,7 @@ export default function RegisterBusinessScreen(_props: Props) {
     const [tipoServicio, setTipoServicio] = React.useState("");
     const [telefono, setTelefono] = React.useState("");
     const [email, setEmail] = React.useState("");
+    const [descripcion, setDescripcion] = React.useState("");
     const [loading, setLoading] = React.useState(false);
     const { user } = React.useContext(AuthContext);
 
@@ -72,7 +73,8 @@ export default function RegisterBusinessScreen(_props: Props) {
                 tipo_servicio: tipoServicio,
                 telefono,
                 email,
-                id_usuario: user?.userId
+                id_usuario: user?.userId,
+                descripcion
             };
 
             const response = await fetch(API_URL, {
@@ -124,6 +126,16 @@ export default function RegisterBusinessScreen(_props: Props) {
                         value={nombreNegocio}
                         onChangeText={setNombreNegocio}
                         placeholder="Ej: Pet Shop La 80"
+                        style={styles.input}
+                    />
+                </View>
+
+                <View style={styles.field}>
+                    <Text style={styles.label}>Descripción</Text>
+                    <TextInput
+                        value={descripcion}
+                        onChangeText={setDescripcion}
+                        placeholder="Ej: Tienda de mascotas y accesorios"
                         style={styles.input}
                     />
                 </View>
