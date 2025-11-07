@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Image,
     Modal,
@@ -9,57 +9,46 @@ import {
     Text,
     TouchableOpacity,
     View,
+    ActivityIndicator
 } from "react-native";
 import AppointmentModal from "../components/AppointmentModal";
 
 interface Provider {
-    id: string;
+    id_proveedor: string;
+    nombre_negocio: string;
+    tipo_servicio: string;
+    telefono: string;
+    email: string;
+    descripcion: string;
     image: string;
-    name: string;
-    category: string;
-    description: string;
-    rating: number;
-    phone: string;
-    address: string;
+    puntuacion: number;
+    direccion: string ;
 }
 
-const PROVIDERS: Provider[] = [
-    {
-        id: "1",
-        image: "https://picsum.photos/400/250?random=101",
-        name: "PetShop Central",
-        category: "Tienda",
-        description: "Amplio surtido de alimentos, accesorios y juguetes para tu mascota. Contamos con las mejores marcas del mercado.",
-        rating: 4.8,
-        phone: "+57 300 123 4567",
-        address: "Calle 45 #23-12, Medellín",
-    },
-    {
-        id: "2",
-        image: "https://picsum.photos/400/250?random=102",
-        name: "Mascotas Felices",
-        category: "Tienda",
-        description: "Especialistas en nutrición animal. Ofrecemos asesoría personalizada para el cuidado de tu mascota.",
-        rating: 4.5,
-        phone: "+57 301 234 5678",
-        address: "Carrera 70 #45-89, Medellín",
-    },
-    {
-        id: "3",
-        image: "https://picsum.photos/400/250?random=103",
-        name: "El Mundo de las Mascotas",
-        category: "Tienda",
-        description: "Todo lo que necesitas para el bienestar de tu mejor amigo. Productos premium y precios accesibles.",
-        rating: 4.7,
-        phone: "+57 302 345 6789",
-        address: "Avenida 33 #67-45, Medellín",
-    },
-];
-
-export default function StoresScreen({ navigation }: any) {
+export default function WalkersScreen({ navigation }: any) {
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
+    const [data, setData] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/providers/service/Tienda")
+        const json = await response.json();
+        setData(json as any[]);
+      } catch (error) {
+        console.log("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <ActivityIndicator />;
 
     const openDetail = (provider: Provider) => {
         setSelectedProvider(provider);
@@ -84,23 +73,21 @@ export default function StoresScreen({ navigation }: any) {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Tiendas</Text>
+                <Text style={styles.headerTitle}>Paseadores</Text>
                 <View style={styles.placeholder} />
             </View>
 
-            {/* List */}
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {PROVIDERS.map((provider) => (
+                {data.map((provider) => (
                     <TouchableOpacity
-                        key={provider.id}
+                        key={provider.provider_id}
                         style={styles.card}
                         activeOpacity={0.9}
                         onPress={() => openDetail(provider)}
@@ -108,22 +95,21 @@ export default function StoresScreen({ navigation }: any) {
                         <Image source={{ uri: provider.image }} style={styles.cardImage} />
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
-                                <Text style={styles.cardName}>{provider.name}</Text>
+                                <Text style={styles.cardName}>{provider.nombre_negocio}</Text>
                                 <View style={styles.ratingContainer}>
                                     <Ionicons name="star" size={16} color="#FFB800" />
-                                    <Text style={styles.ratingText}>{provider.rating}</Text>
+                                    <Text style={styles.ratingText}>{provider.puntuacion}</Text>
                                 </View>
                             </View>
-                            <Text style={styles.cardCategory}>{provider.category}</Text>
+                            <Text style={styles.cardCategory}>{provider.tipo_servicio}</Text>
                             <Text style={styles.cardDescription} numberOfLines={2}>
-                                {provider.description}
+                                {provider.descripcion}
                             </Text>
                         </View>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
 
-            {/* Modal de Detalle */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -143,35 +129,34 @@ export default function StoresScreen({ navigation }: any) {
                                     style={styles.modalImage}
                                 />
                                 <View style={styles.modalBody}>
-                                    <Text style={styles.modalName}>{selectedProvider.name}</Text>
-                                    <Text style={styles.modalCategory}>{selectedProvider.category}</Text>
+                                    <Text style={styles.modalName}>{selectedProvider.nombre_negocio}</Text>
+                                    <Text style={styles.modalCategory}>{selectedProvider.tipo_servicio}</Text>
 
                                     <View style={styles.modalRating}>
                                         <Ionicons name="star" size={20} color="#FFB800" />
-                                        <Text style={styles.modalRatingText}>{selectedProvider.rating}</Text>
-                                        <Text style={styles.modalRatingSubtext}>(150+ reseñas)</Text>
+                                        <Text style={styles.modalRatingText}>{selectedProvider.puntuacion}</Text>
+                                        <Text style={styles.modalRatingSubtext}>(120+ reseñas)</Text>
                                     </View>
 
                                     <View style={styles.section}>
                                         <Text style={styles.sectionTitle}>Descripción</Text>
-                                        <Text style={styles.sectionText}>{selectedProvider.description}</Text>
+                                        <Text style={styles.sectionText}>{selectedProvider.descripcion}</Text>
                                     </View>
 
                                     <View style={styles.section}>
                                         <View style={styles.infoRow}>
                                             <Ionicons name="call" size={20} color="#2196F3" />
-                                            <Text style={styles.infoText}>{selectedProvider.phone}</Text>
+                                            <Text style={styles.infoText}>{selectedProvider.telefono}</Text>
                                         </View>
                                     </View>
 
                                     <View style={styles.section}>
                                         <View style={styles.infoRow}>
                                             <Ionicons name="location" size={20} color="#2196F3" />
-                                            <Text style={styles.infoText}>{selectedProvider.address}</Text>
+                                            <Text style={styles.infoText}>{selectedProvider.direccion || "No disponible"}</Text>
                                         </View>
                                     </View>
 
-                                    {/* Botón Agendar Cita */}
                                     <TouchableOpacity
                                         style={styles.appointmentButton}
                                         onPress={openAppointmentModal}
@@ -187,15 +172,14 @@ export default function StoresScreen({ navigation }: any) {
                 </View>
             </Modal>
 
-            {/* Modal de Agendar Cita */}
             {selectedProvider && (
                 <AppointmentModal
                     visible={appointmentModalVisible}
                     onClose={closeAppointmentModal}
                     provider={{
-                        id: selectedProvider.id,
-                        name: selectedProvider.name,
-                        category: selectedProvider.category
+                        id: selectedProvider.id_proveedor,
+                        name: selectedProvider.nombre_negocio,
+                        category: selectedProvider.tipo_servicio
                     }}
                 />
             )}
