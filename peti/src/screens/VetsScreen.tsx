@@ -77,7 +77,7 @@ export default function WalkersScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Paseadores</Text>
+                <Text style={styles.headerTitle}>Veterinarias</Text>
                 <View style={styles.placeholder} />
             </View>
 

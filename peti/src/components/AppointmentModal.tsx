@@ -33,10 +33,8 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     const [isBooking, setIsBooking] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-    // Fecha mínima (hoy)
     const today = new Date().toISOString().split('T')[0];
 
-    // Resetear estado al cerrar
     useEffect(() => {
         if (!visible) {
             setSelectedDate("");
@@ -45,7 +43,6 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
         }
     }, [visible]);
 
-    // Cargar disponibilidad cuando se selecciona una fecha
     const loadAvailability = useCallback(async () => {
         if (!selectedDate || !token) return;
         
@@ -56,7 +53,6 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
             setTimeSlots(slots);
         } catch (error) {
             console.error('Error loading availability:', error);
-            // En caso de error, mostramos los slots disponibles por defecto
             setTimeSlots([]);
         } finally {
             setLoading(false);
@@ -78,13 +74,13 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     };
 
     const handleConfirmAppointment = () => {
-        console.log('🔵 Abriendo modal de confirmación');
+        console.log('Abriendo modal de confirmación');
         if (!selectedDate || !selectedTime) {
-            console.log('❌ Error: Falta fecha u hora');
+            console.log('Error: Falta fecha u hora');
             return;
         }
         if (!user || !token) {
-            console.log('❌ Error: No hay sesión');
+            console.log('Error: No hay sesión');
             return;
         }
         setShowConfirmModal(true);
@@ -105,16 +101,16 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                 duration: 60
             };
             
-            console.log('📤 Enviando datos:', appointmentData);
+            console.log('Enviando datos:', appointmentData);
             
             await createAppointment(appointmentData, token!);
 
-            console.log('✅ Cita creada exitosamente');
+            console.log('Cita creada exitosamente');
             
             // Cerrar modal y resetear
             onClose();
         } catch (error) {
-            console.error('❌ Error al crear cita:', error);
+            console.error('Error al crear cita:', error);
             // Aquí podrías mostrar otro modal de error si quieres
         } finally {
             setIsBooking(false);
@@ -283,7 +279,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                                 testID="confirm-appointment-button"
                                 style={[styles.confirmButton, isBooking && styles.confirmButtonDisabled]}
                                 onPress={() => {
-                                    console.log('🟢 BOTÓN PRESIONADO - Confirmar Cita');
+                                    console.log('BOTÓN PRESIONADO - Confirmar Cita');
                                     handleConfirmAppointment();
                                 }}
                                 disabled={isBooking}
