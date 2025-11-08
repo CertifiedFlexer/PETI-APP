@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 
-const PRIMARY = "#39C7fD";
+const PRIMARY = "#3AC7FD";
 const BORDER = "#ccc";
 const API_URL = "http://localhost:3000/api/providers";
 

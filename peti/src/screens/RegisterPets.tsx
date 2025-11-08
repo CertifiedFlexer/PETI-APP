@@ -35,13 +35,6 @@ export default function RegisterPetScreen(_props: Props) {
     const { user } = React.useContext(AuthContext);
 
     const validate = () => {
-        console.log('🔍 Validando campos:');
-        console.log('  - Nombre:', nombre, '| Válido:', !!nombre.trim());
-        console.log('  - Especie:', especie, '| Válido:', !!especie.trim());
-        console.log('  - Raza:', raza, '| Válido:', !!raza.trim());
-        console.log('  - Fecha:', fechaNacimiento, '| Válido:', !!fechaNacimiento.trim());
-        console.log('  - Peso:', peso, '| Válido:', !!peso.trim());
-
         if (!nombre.trim()) {
             Alert.alert('Error', 'Por favor ingresa el nombre de tu mascota');
             return false;
@@ -50,78 +43,45 @@ export default function RegisterPetScreen(_props: Props) {
             Alert.alert('Error', 'Por favor ingresa la especie');
             return false;
         }
-
         return true;
     };
 
     const handleRegisterPet = async () => {
-        console.log('🔵 Iniciando registro de mascota...');
-        console.log('user: ', user);
-        console.log('Datos:', { nombre, especie, raza, fechaNacimiento, peso });
-        
-        if (!validate()) {
-            console.log('❌ Validación falló');
-            return;
-        }
-        
-        console.log('✅ Validación pasó');
+        if (!validate()) return;
         setLoading(true);
         
         try {
-            const bodyData = {
-                nombre,
-                especie,
-                raza: raza || null,
-                fecha_nacimiento: fechaNacimiento || null,
-                peso: Number(peso) || null,
-                id_usuario: user?.userId
-            };
-            
-            console.log('📤 Enviando datos:', bodyData);
-            console.log('📡 URL:', API_URL);
-            
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(bodyData),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre,
+                    especie,
+                    raza: raza || null,
+                    fecha_nacimiento: fechaNacimiento || null,
+                    peso: Number(peso) || null,
+                    id_usuario: user?.userId
+                }),
             });
 
-            console.log('📥 Response status:', response.status);
+            if (!response.ok) throw new Error('Error al registrar mascota');
 
-            if (!response.ok) {
-                throw new Error('Error al registrar mascota');
-            }
-
-            console.log('✅ Registro de mascota exitoso');
-            Alert.alert(
-                'Éxito',
-                'Tu mascota ha sido registrada correctamente',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            // Reset form
-                            setNombre('');
-                            setEspecie('');
-                            setRaza('');
-                            setFechaNacimiento('');
-                            setPeso('');
-                        }
+            Alert.alert('Éxito', 'Tu mascota ha sido registrada correctamente', [
+                {
+                    text: 'OK',
+                    onPress: () => {
+                        setNombre('');
+                        setEspecie('');
+                        setRaza('');
+                        setFechaNacimiento('');
+                        setPeso('');
                     }
-                ]
-            );
+                }
+            ]);
         } catch (error: any) {
-            console.error('❌ Error en registro:', error);
-            console.error('Error completo:', JSON.stringify(error, null, 2));
-            Alert.alert(
-                'Error', 
-                error.message || 'No se pudo completar el registro. Intenta de nuevo.'
-            );
+            Alert.alert('Error', error.message || 'No se pudo completar el registro. Intenta de nuevo.');
         } finally {
             setLoading(false);
-            console.log('🔵 Proceso finalizado');
         }
     };
 
@@ -191,7 +151,7 @@ export default function RegisterPetScreen(_props: Props) {
 
                 <TouchableOpacity
                     onPress={handleRegisterPet}
-                    style={[styles.submit, loading ? { opacity: 0.7 } : {}]}
+                    style={[styles.submit, loading && { opacity: 0.7 }]}
                     disabled={loading}
                 >
                     <Text style={styles.submitText}>

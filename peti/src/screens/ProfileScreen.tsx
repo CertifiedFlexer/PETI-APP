@@ -3,7 +3,7 @@ import React from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
-const PRIMARY = '#39C7fD';
+const PRIMARY = '#3AC7FD';
 
 export default function ProfileScreen({ navigation }: any) {
   const { user } = useAuth();
