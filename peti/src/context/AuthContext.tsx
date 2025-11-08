@@ -35,7 +35,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Guardar datos en AsyncStorage
   const saveAuthData = async (token: string, user: User) => {
     try {
       await AsyncStorage.setItem('userToken', token);
@@ -45,7 +44,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Limpiar datos de AsyncStorage
   const clearAuthData = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
@@ -55,7 +53,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  // Cargar datos desde AsyncStorage
   const loadAuthData = async () => {
     try {
       const savedToken = await AsyncStorage.getItem('userToken');
@@ -83,11 +80,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         userId: response.data.id
       };
 
-      // Guardar en estado y AsyncStorage
       setToken(response.data.token);
       setUser(newUser);
       await saveAuthData(response.data.token, newUser);
-
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -138,7 +133,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 };
 
-// Hook personalizado para usar el contexto
 export const useAuth = () => {
   const context = React.useContext(AuthContext);
   if (!context) {

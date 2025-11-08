@@ -78,13 +78,13 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     };
 
     const handleConfirmAppointment = () => {
-        console.log('🔵 Abriendo modal de confirmación');
+        console.log('Abriendo modal de confirmación');
         if (!selectedDate || !selectedTime) {
-            console.log('❌ Error: Falta fecha u hora');
+            console.log('Error: Falta fecha u hora');
             return;
         }
         if (!user || !token) {
-            console.log('❌ Error: No hay sesión');
+            console.log('Error: No hay sesión');
             return;
         }
         setShowConfirmModal(true);
@@ -105,16 +105,16 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                 duration: 60
             };
             
-            console.log('📤 Enviando datos:', appointmentData);
+            console.log('Enviando datos:', appointmentData);
             
             await createAppointment(appointmentData, token!);
 
-            console.log('✅ Cita creada exitosamente');
+            console.log('Cita creada exitosamente');
             
             // Cerrar modal y resetear
             onClose();
         } catch (error) {
-            console.error('❌ Error al crear cita:', error);
+            console.error('Error al crear cita:', error);
             // Aquí podrías mostrar otro modal de error si quieres
         } finally {
             setIsBooking(false);
@@ -136,7 +136,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     const markedDates = selectedDate ? {
         [selectedDate]: {
             selected: true,
-            selectedColor: '#4CAF50'
+            selectedColor: '#3AC7FD'
         }
     } : {};
 
@@ -161,7 +161,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                     <ScrollView showsVerticalScrollIndicator={false}>
                         {/* Información del proveedor */}
                         <View style={styles.providerInfo}>
-                            <Ionicons name="business" size={24} color="#4CAF50" />
+                            <Ionicons name="business" size={24} color="#3AC7FD" />
                             <View style={styles.providerText}>
                                 <Text style={styles.providerName}>{provider.name}</Text>
                                 <Text style={styles.providerCategory}>{provider.category}</Text>
@@ -176,8 +176,8 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                                 markedDates={markedDates}
                                 minDate={today}
                                 theme={{
-                                    todayTextColor: '#4CAF50',
-                                    arrowColor: '#4CAF50',
+                                    todayTextColor: '#3AC7FD',
+                                    arrowColor: '#3AC7FD',
                                     monthTextColor: '#1A1A1A',
                                     textMonthFontWeight: 'bold',
                                     textDayFontSize: 16,
@@ -198,7 +198,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
 
                                 {loading ? (
                                     <View style={styles.loadingContainer}>
-                                        <ActivityIndicator size="large" color="#4CAF50" />
+                                        <ActivityIndicator size="large" color="#3AC7FD" />
                                         <Text style={styles.loadingText}>Cargando horarios...</Text>
                                     </View>
                                 ) : timeSlots.length > 0 ? (
@@ -283,7 +283,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                                 testID="confirm-appointment-button"
                                 style={[styles.confirmButton, isBooking && styles.confirmButtonDisabled]}
                                 onPress={() => {
-                                    console.log('🟢 BOTÓN PRESIONADO - Confirmar Cita');
+                                    console.log('BOTÓN PRESIONADO - Confirmar Cita');
                                     handleConfirmAppointment();
                                 }}
                                 disabled={isBooking}
@@ -315,7 +315,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                 <View style={styles.confirmModalOverlay}>
                     <View style={styles.confirmModalContent}>
                         <View style={styles.confirmIconContainer}>
-                            <Ionicons name="calendar-outline" size={48} color="#4CAF50" />
+                            <Ionicons name="calendar-outline" size={48} color="#3AC7FD" />
                         </View>
                         
                         <Text style={styles.confirmTitle}>Confirmar Cita</Text>
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     },
     providerCategory: {
         fontSize: 14,
-        color: "#4CAF50",
+        color: "#3AC7FD",
         fontWeight: "600",
         marginTop: 2,
     },
@@ -466,8 +466,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     timeSlotSelected: {
-        backgroundColor: "#4CAF50",
-        borderColor: "#4CAF50",
+        backgroundColor: "#3AC7FD",
+        borderColor: "#3AC7FD",
     },
     timeSlotOccupied: {
         backgroundColor: "#F5F5F5",
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#4CAF50",
+        backgroundColor: "#3AC7FD",
         marginHorizontal: 20,
         marginTop: 20,
         paddingVertical: 16,
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
         color: "#666",
     },
     confirmButtonGreen: {
-        backgroundColor: "#4CAF50",
+        backgroundColor: "#3AC7FD",
         flexDirection: "row",
         gap: 6,
     },

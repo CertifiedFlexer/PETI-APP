@@ -65,23 +65,23 @@ export default function WalkersScreen({ navigation }: any) {
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-      useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/providers/service/Paseador")
-        const json = await response.json();
-        setData(json as any[]);
-      } catch (error) {
-        console.log("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch("http://localhost:3000/api/providers/service/Paseador")
+                const json = await response.json();
+                setData(json as any[]);
+            } catch (error) {
+                console.log("Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    fetchData();
-  }, []);
+        fetchData();
+    }, []);
 
-  if (loading) return <ActivityIndicator />;
+    if (loading) return <ActivityIndicator />;
 
     const openDetail = (provider: Provider) => {
         setSelectedProvider(provider);
@@ -398,12 +398,12 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#4CAF50",
+        backgroundColor: "#3AC7FD",
         paddingVertical: 16,
         borderRadius: 12,
         marginTop: 24,
         gap: 8,
-        shadowColor: "#4CAF50",
+        shadowColor: "#3AC7FD",
         shadowOpacity: 0.3,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 4 },

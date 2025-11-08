@@ -28,9 +28,7 @@ export default function RegisterScreen() {
             Alert.alert('Error', 'Por favor completa todos los campos');
             return false;
         }
-        // email simple regex
-        const re = /^\S+@\S+\.\S+$/;
-        if (!re.test(email)) {
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
             Alert.alert('Email inválido', 'Por favor ingresa un email válido');
             return false;
         }
@@ -42,73 +40,40 @@ export default function RegisterScreen() {
     };
 
     const handleRegister = async () => {
-        console.log('🔵 Iniciando registro...');
-        console.log('Datos:', { name, email, password, phone });
-        
-        if (!validate()) {
-            console.log('❌ Validación falló');
-            return;
-        }
-        
-        console.log('✅ Validación pasó');
+        if (!validate()) return;
         setLoading(true);
         
         try {
-            const bodyData = {
-                nombre: name,
-                email: email,
-                contraseña: password,
-                rol: 'admin',
-            };
-            
-            console.log('📤 Enviando datos:', bodyData);
-            console.log('📡 URL:', API_URL);
-            
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(bodyData),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: name,
+                    email: email,
+                    contraseña: password,
+                    telefono: phone,
+                    rol: 'admin',
+                }),
             });
 
-            console.log('📥 Response status:', response.status);
-            
-            const data = (await response.json()) as { message?: string };
-            console.log('📥 Response data:', data);
+            const data = await response.json() as { message?: string };
+            if (!response.ok) throw new Error(data.message || 'Error al crear usuario');
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Error al crear usuario');
-            }
-
-            // Registro exitoso
-            console.log('✅ Registro exitoso');
-            Alert.alert(
-                'Éxito',
-                'Tu cuenta ha sido creada correctamente',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            // Reset form
-                            setName('');
-                            setEmail('');
-                            setPassword('');
-                            setPhone('');
-                        }
+            Alert.alert('Éxito', 'Tu cuenta ha sido creada correctamente', [
+                {
+                    text: 'OK',
+                    onPress: () => {
+                        setName('');
+                        setEmail('');
+                        setPassword('');
+                        setPhone('');
                     }
-                ]
-            );
+                }
+            ]);
         } catch (error: any) {
-            console.error('❌ Error en registro:', error);
-            console.error('Error completo:', JSON.stringify(error, null, 2));
-            Alert.alert(
-                'Error', 
-                error.message || 'No se pudo completar el registro. Intenta de nuevo.'
-            );
+            Alert.alert('Error', error.message || 'No se pudo completar el registro. Intenta de nuevo.');
         } finally {
             setLoading(false);
-            console.log('🔵 Proceso finalizado');
         }
     };
 
@@ -170,7 +135,7 @@ export default function RegisterScreen() {
 
                 <TouchableOpacity
                     onPress={handleRegister}
-                    style={[styles.submit, loading ? { opacity: 0.7 } : {}]}
+                    style={[styles.submit, loading && { opacity: 0.7 }]}
                     disabled={loading}
                 >
                     <Text style={styles.submitText}>{loading ? 'Creando...' : 'Crear cuenta'}</Text>

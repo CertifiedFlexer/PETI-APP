@@ -3,16 +3,16 @@ import React, { useContext } from "react";
 import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 
-const PRIMARY = '#39C7fD';
+const PRIMARY = '#3AC7FD';
 
 const options = [
-  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#2196F3', bg: '#FFF0F5', navigateTo: 'Stores' },
-  { key: 'vets', label: 'Veterinarias', icon: 'medical', color: '#4CAF50', bg: '#F1F8F4', navigateTo: 'Vets' },
-  { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#FF9800', bg: '#FFF8F0', navigateTo: 'Groomers' },
-  { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#2196F3', bg: '#F0F7FF', navigateTo: 'Walkers' },
-  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#4CAF50', bg: '#F8F0FF', navigateTo: 'Insurance' },
-  { key: 'RegisterProveedor', label: 'Registrar Proveedor', icon: 'briefcase', color: '#FF5722', bg: '#FFF4E5', navigateTo: 'RegisterProveedor' },
-  { key: 'RegisterPet', label: 'Registrar Mascota', icon: 'paw', color: '#9C27B0', bg: '#F5E8FF', navigateTo: 'RegisterPet' },
+  { key: 'stores', label: 'Tiendas', icon: 'cart', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'Stores' },
+  { key: 'vets', label: 'Veterinarias', icon: 'medical', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'Vets' },
+  { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'Groomers' },
+  { key: 'walkers', label: 'Paseadores', icon: 'walk', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'Walkers' },
+  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'Insurance' },
+  { key: 'RegisterProveedor', label: 'Registrar Proveedor', icon: 'briefcase', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'RegisterProveedor' },
+  { key: 'RegisterPet', label: 'Registrar Mascota', icon: 'paw', color: PRIMARY, bg: '#F1F8F4', navigateTo: 'RegisterPet' },
 ];
 
 export default function HomeScreen({ navigation }: any) {
@@ -21,15 +21,9 @@ export default function HomeScreen({ navigation }: any) {
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (error) {
-      console.error('❌ Error al cerrar sesión:', error);
+    } catch {
       Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
     }
-  };
-
-  const onSelect = (option: typeof options[0]) => {
-    // Navegación directa al screen correspondiente
-    navigation.navigate(option.navigateTo);
   };
 
   return (
@@ -40,7 +34,6 @@ export default function HomeScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
         <View style={styles.headerContainer}>
           <View>
             <Text style={styles.greeting}>Hola 👋</Text>
@@ -53,20 +46,18 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        {/* Subtitle */}
         <View style={styles.subtitleContainer}>
           <Text style={styles.subtitle}>¿En qué podemos ayudarte hoy?</Text>
           <View style={styles.decorativeLine} />
         </View>
 
-        {/* Grid de opciones */}
         <View style={styles.grid}>
           {options.map((opt) => (
             <TouchableOpacity
               key={opt.key}
               style={styles.cardWrapper}
               activeOpacity={0.85}
-              onPress={() => onSelect(opt)}
+              onPress={() => navigation.navigate(opt.navigateTo)}
             >
               <View style={[styles.card, { backgroundColor: opt.bg }]}>
                 <View style={[styles.iconWrap, { backgroundColor: opt.color }]}>

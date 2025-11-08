@@ -21,7 +21,6 @@ export default function LoginScreen() {
     setIsLoggingIn(true);
     try {
       await login(email, password);
-      // La navegación se manejará automáticamente por el cambio de estado en el contexto
     } catch (error: any) {
       Alert.alert("Error", error.message || "Error al iniciar sesión");
     } finally {
@@ -37,12 +36,13 @@ export default function LoginScreen() {
       </View>
     );
   }
+
   if (showRegister) {
     return (
       <View style={{ flex: 1 }}>
         <View style={{ padding: 12, backgroundColor: '#fff' }}>
           <TouchableOpacity onPress={() => setShowRegister(false)}>
-            <Text style={{ color: '#39C7fD', fontWeight: '600' }}>{'<'} Volver</Text>
+            <Text style={{ color: PRIMARY, fontWeight: '600' }}>{'<'} Volver</Text>
           </TouchableOpacity>
         </View>
         <RegisterScreen />
@@ -54,6 +54,7 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Image source={require("../assets/images/logo.jpeg")} style={styles.logo} resizeMode="contain"/>
       <Text style={styles.title}>Iniciar Sesión</Text>
+      
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -72,13 +73,14 @@ export default function LoginScreen() {
         secureTextEntry
         autoComplete="password"
       />
+
       <View style={{ borderRadius: 10, overflow: "hidden", width: '100%' }}>
-      <Button 
-        title={isLoggingIn ? "Iniciando sesión..." : "Iniciar Sesión"} 
-        onPress={handleLogin} 
-        color={"#39C7fD"}
-        disabled={isLoggingIn || isLoading}
-      />
+        <Button 
+          title={isLoggingIn ? "Iniciando sesión..." : "Iniciar Sesión"} 
+          onPress={handleLogin} 
+          color={PRIMARY}
+          disabled={isLoggingIn || isLoading}
+        />
       </View>
 
       <TouchableOpacity onPress={() => setShowRegister(true)} style={styles.registerLink}>
@@ -112,12 +114,11 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     backgroundColor: "#f9f9f9"
   },
-  logo:{
+  logo: {
     width: 50,
     height: 100,
     marginBottom: 20
-  }
-  ,
+  },
   registerLink: {
     marginTop: 16,
   },
