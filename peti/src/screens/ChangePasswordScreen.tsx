@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
@@ -19,6 +19,7 @@ const API_URL = "http://localhost:3000/api/users";
 
 export default function ChangePasswordScreen({ navigation }: any) {
     const { user } = useAuth();
+    const { showSuccess, showError, showWarning } = useToast();
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
@@ -30,35 +31,54 @@ export default function ChangePasswordScreen({ navigation }: any) {
     const [showConfirm, setShowConfirm] = useState(false);
 
     const validate = () => {
+        // Validar campos vacíos con mensajes específicos
         if (!currentPassword) {
-            Alert.alert("Error", "Ingresa tu contraseña actual");
+            showWarning("Por favor ingresa tu contraseña actual");
             return false;
         }
+
         if (!newPassword) {
-            Alert.alert("Error", "Ingresa tu nueva contraseña");
+            showWarning("Por favor ingresa tu nueva contraseña");
             return false;
         }
+
+        if (!confirmPassword) {
+            showWarning("Por favor confirma tu nueva contraseña");
+            return false;
+        }
+
+        // Validar longitud de contraseña
         if (newPassword.length < 6) {
-            Alert.alert("Error", "La nueva contraseña debe tener al menos 6 caracteres");
+            showWarning("La nueva contraseña debe tener al menos 6 caracteres");
             return false;
         }
+
+        // Validar que las contraseñas coincidan
         if (newPassword !== confirmPassword) {
-            Alert.alert("Error", "Las contraseñas no coinciden");
+            showError("Las contraseñas no coinciden");
             return false;
         }
+
+        // Validar que la nueva contraseña sea diferente
         if (currentPassword === newPassword) {
-            Alert.alert("Error", "La nueva contraseña debe ser diferente a la actual");
+            showWarning("La nueva contraseña debe ser diferente a la actual");
             return false;
         }
+
         return true;
     };
 
     const handleChangePassword = async () => {
         if (!validate()) return;
 
+        if (!user?.userId) {
+            showError("No se pudo identificar el usuario");
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/${user?.userId}/password`, {
+            const response = await fetch(`${API_URL}/${user.userId}/password`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -69,27 +89,39 @@ export default function ChangePasswordScreen({ navigation }: any) {
 
             if (!response.ok) {
                 const errorData = (await response.json()) as { message?: string };
-                throw new Error(errorData.message || "Error al cambiar la contraseña");
+                
+                if (response.status === 401) {
+                    showError("La contraseña actual es incorrecta");
+                } else if (response.status === 400) {
+                    showError(errorData.message || "Datos inválidos");
+                } else if (response.status === 404) {
+                    showError("Usuario no encontrado");
+                } else {
+                    showError(errorData.message || "Error al cambiar la contraseña");
+                }
+                return;
             }
 
-            Alert.alert(
-                "Éxito",
-                "Tu contraseña ha sido actualizada correctamente",
-                [
-                    {
-                        text: "OK",
-                        onPress: () => navigation.goBack(),
-                    },
-                ]
-            );
+            showSuccess("Contraseña actualizada correctamente");
 
             // Limpiar campos
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");
+
+            // Volver a la pantalla anterior después de un pequeño delay
+            setTimeout(() => {
+                navigation.goBack();
+            }, 1500);
+
         } catch (error: any) {
-            Alert.alert("Error", error.message || "No se pudo cambiar la contraseña");
             console.error("Error changing password:", error);
+            
+            if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+                showError("Error de conexión. Verifica tu internet");
+            } else {
+                showError(error.message || "No se pudo cambiar la contraseña");
+            }
         } finally {
             setLoading(false);
         }
@@ -99,7 +131,11 @@ export default function ChangePasswordScreen({ navigation }: any) {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backButton}
+                    disabled={loading}
+                >
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Cambiar Contraseña</Text>
@@ -129,14 +165,16 @@ export default function ChangePasswordScreen({ navigation }: any) {
                                 <TextInput
                                     value={currentPassword}
                                     onChangeText={setCurrentPassword}
-                                    placeholder="••••••••"
+                                    placeholder="Ingresa tu contraseña actual"
                                     style={styles.input}
                                     secureTextEntry={!showCurrent}
                                     returnKeyType="next"
+                                    editable={!loading}
                                 />
                                 <TouchableOpacity
                                     onPress={() => setShowCurrent(!showCurrent)}
                                     style={styles.eyeButton}
+                                    disabled={loading}
                                 >
                                     <Ionicons
                                         name={showCurrent ? "eye-off" : "eye"}
@@ -153,14 +191,16 @@ export default function ChangePasswordScreen({ navigation }: any) {
                                 <TextInput
                                     value={newPassword}
                                     onChangeText={setNewPassword}
-                                    placeholder="••••••••"
+                                    placeholder="Mínimo 6 caracteres"
                                     style={styles.input}
                                     secureTextEntry={!showNew}
                                     returnKeyType="next"
+                                    editable={!loading}
                                 />
                                 <TouchableOpacity
                                     onPress={() => setShowNew(!showNew)}
                                     style={styles.eyeButton}
+                                    disabled={loading}
                                 >
                                     <Ionicons
                                         name={showNew ? "eye-off" : "eye"}
@@ -177,14 +217,16 @@ export default function ChangePasswordScreen({ navigation }: any) {
                                 <TextInput
                                     value={confirmPassword}
                                     onChangeText={setConfirmPassword}
-                                    placeholder="••••••••"
+                                    placeholder="Repite tu nueva contraseña"
                                     style={styles.input}
                                     secureTextEntry={!showConfirm}
                                     returnKeyType="done"
+                                    editable={!loading}
                                 />
                                 <TouchableOpacity
                                     onPress={() => setShowConfirm(!showConfirm)}
                                     style={styles.eyeButton}
+                                    disabled={loading}
                                 >
                                     <Ionicons
                                         name={showConfirm ? "eye-off" : "eye"}
@@ -222,14 +264,31 @@ export default function ChangePasswordScreen({ navigation }: any) {
                                 />
                                 <Text style={styles.requirementText}>Las contraseñas coinciden</Text>
                             </View>
+                            <View style={styles.requirement}>
+                                <Ionicons
+                                    name={
+                                        newPassword && currentPassword && newPassword !== currentPassword
+                                            ? "checkmark-circle"
+                                            : "ellipse-outline"
+                                    }
+                                    size={18}
+                                    color={
+                                        newPassword && currentPassword && newPassword !== currentPassword
+                                            ? "#4CAF50"
+                                            : "#999"
+                                    }
+                                />
+                                <Text style={styles.requirementText}>Diferente a la actual</Text>
+                            </View>
                         </View>
                     </View>
 
                     {/* Botón guardar */}
                     <TouchableOpacity
                         onPress={handleChangePassword}
-                        style={[styles.saveButton, loading && { opacity: 0.7 }]}
+                        style={[styles.saveButton, loading && styles.saveButtonDisabled]}
                         disabled={loading}
+                        activeOpacity={0.8}
                     >
                         <Text style={styles.saveButtonText}>
                             {loading ? "Actualizando..." : "Actualizar Contraseña"}
@@ -357,6 +416,9 @@ const styles = StyleSheet.create({
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 4 },
         elevation: 5,
+    },
+    saveButtonDisabled: {
+        opacity: 0.6,
     },
     saveButtonText: {
         color: "#fff",

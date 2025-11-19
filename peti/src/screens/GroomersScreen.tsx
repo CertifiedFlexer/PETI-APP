@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Image,
     Modal,
     ScrollView,
@@ -8,10 +9,10 @@ import {
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
-    ActivityIndicator
+    View
 } from "react-native";
 import AppointmentModal from "../components/AppointmentModal";
+import { useToast } from "../context/ToastContext";
 
 interface Provider {
     id_proveedor: string;
@@ -22,35 +23,68 @@ interface Provider {
     descripcion: string;
     image: string;
     puntuacion: number;
-    direccion: string ;
+    direccion: string;
 }
 
-export default function WalkersScreen({ navigation }: any) {
+export default function GroomersScreen({ navigation }: any) {
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { showError, showInfo } = useToast();
 
-      useEffect(() => {
+    useEffect(() => {
+        fetchData();
+    }, []);
+
     const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/providers/service/Peluquería")
-        const json = await response.json();
-        setData(json as any[]);
-      } catch (error) {
-        console.log("Error:", error);
-      } finally {
-        setLoading(false);
-      }
+        setLoading(true);
+        try {
+            const response = await fetch("http://localhost:3000/api/providers/service/Peluquería");
+            
+            if (!response.ok) {
+                if (response.status === 404) {
+                    showInfo("No hay peluquerías disponibles");
+                } else if (response.status === 500) {
+                    showError("Error en el servidor. Intenta más tarde");
+                } else {
+                    showError("Error al cargar peluquerías");
+                }
+                setData([]);
+                return;
+            }
+
+            const json = await response.json();
+            
+            if (!json || json.length === 0) {
+                showInfo("No hay peluquerías disponibles en este momento");
+                setData([]);
+            } else {
+                setData(json as any[]);
+            }
+
+        } catch (error: any) {
+            console.log("Error:", error);
+            
+            if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+                showError("Error de conexión. Verifica tu internet");
+            } else if (error.message.includes('timeout')) {
+                showError("La solicitud tardó demasiado. Intenta de nuevo");
+            } else {
+                showError("Error inesperado al cargar peluquerías");
+            }
+            setData([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    fetchData();
-  }, []);
-
-  if (loading) return <ActivityIndicator />;
-
     const openDetail = (provider: Provider) => {
+        if (!provider || !provider.id_proveedor) {
+            showError("Datos del proveedor no disponibles");
+            return;
+        }
         setSelectedProvider(provider);
         setModalVisible(true);
     };
@@ -69,6 +103,43 @@ export default function WalkersScreen({ navigation }: any) {
         setAppointmentModalVisible(false);
     };
 
+    if (loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4CAF50" />
+                <Text style={styles.loadingText}>Cargando peluquerías...</Text>
+            </View>
+        );
+    }
+
+    if (data.length === 0) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Peluquerías</Text>
+                    <View style={styles.placeholder} />
+                </View>
+                <View style={styles.emptyStateContainer}>
+                    <Ionicons name="cut-outline" size={80} color="#ccc" />
+                    <Text style={styles.emptyStateTitle}>No hay peluquerías disponibles</Text>
+                    <Text style={styles.emptyStateText}>
+                        Intenta de nuevo más tarde o verifica tu conexión
+                    </Text>
+                    <TouchableOpacity 
+                        style={styles.retryButton}
+                        onPress={fetchData}
+                    >
+                        <Ionicons name="refresh" size={20} color="#fff" />
+                        <Text style={styles.retryButtonText}>Reintentar</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -77,7 +148,7 @@ export default function WalkersScreen({ navigation }: any) {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Paseadores</Text>
+                <Text style={styles.headerTitle}>Peluquerías</Text>
                 <View style={styles.placeholder} />
             </View>
 
@@ -87,23 +158,32 @@ export default function WalkersScreen({ navigation }: any) {
             >
                 {data.map((provider) => (
                     <TouchableOpacity
-                        key={provider.provider_id}
+                        key={provider.id_proveedor}
                         style={styles.card}
                         activeOpacity={0.9}
                         onPress={() => openDetail(provider)}
                     >
-                        <Image source={{ uri: provider.image }} style={styles.cardImage} />
+                        <Image 
+                            source={{ uri: provider.image || 'https://via.placeholder.com/400x250' }} 
+                            style={styles.cardImage}
+                        />
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
-                                <Text style={styles.cardName}>{provider.nombre_negocio}</Text>
+                                <Text style={styles.cardName}>
+                                    {provider.nombre_negocio || 'Sin nombre'}
+                                </Text>
                                 <View style={styles.ratingContainer}>
                                     <Ionicons name="star" size={16} color="#FFB800" />
-                                    <Text style={styles.ratingText}>{provider.puntuacion}</Text>
+                                    <Text style={styles.ratingText}>
+                                        {provider.puntuacion || '0.0'}
+                                    </Text>
                                 </View>
                             </View>
-                            <Text style={styles.cardCategory}>{provider.tipo_servicio}</Text>
+                            <Text style={styles.cardCategory}>
+                                {provider.tipo_servicio || 'Peluquería'}
+                            </Text>
                             <Text style={styles.cardDescription} numberOfLines={2}>
-                                {provider.descripcion}
+                                {provider.descripcion || 'Sin descripción'}
                             </Text>
                         </View>
                     </TouchableOpacity>
@@ -191,6 +271,51 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#F8F9FD",
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: "#F8F9FD",
+    },
+    loadingText: {
+        marginTop: 12,
+        fontSize: 16,
+        color: '#666',
+    },
+    emptyStateContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 40,
+    },
+    emptyStateTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1A1A1A',
+        marginTop: 20,
+        marginBottom: 8,
+    },
+    emptyStateText: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 20,
+        marginBottom: 24,
+    },
+    retryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#4CAF50',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        gap: 8,
+    },
+    retryButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
     header: {
         flexDirection: "row",

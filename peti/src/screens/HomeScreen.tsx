@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useContext } from "react";
-import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { AuthContext } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const PRIMARY = '#39C7fD';
 
@@ -17,19 +18,30 @@ const options = [
 
 export default function HomeScreen({ navigation }: any) {
   const { user, logout } = useContext(AuthContext);
+  const { showSuccess, showError, showInfo } = useToast();
 
   const handleLogout = async () => {
     try {
       await logout();
-    } catch (error) {
+      showSuccess("Sesión cerrada correctamente");
+    } catch (error: any) {
       console.error('❌ Error al cerrar sesión:', error);
-      Alert.alert('Error', 'No se pudo cerrar sesión. Intenta de nuevo.');
+      
+      if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+        showError("Error de conexión al cerrar sesión");
+      } else {
+        showError("Error al cerrar sesión. Intenta de nuevo");
+      }
     }
   };
 
   const onSelect = (option: typeof options[0]) => {
-    // Navegación directa al screen correspondiente
-    navigation.navigate(option.navigateTo);
+    try {
+      navigation.navigate(option.navigateTo);
+    } catch (error) {
+      console.error('Error navegando:', error);
+      showError("Error al navegar a la pantalla");
+    }
   };
 
   return (
@@ -43,10 +55,13 @@ export default function HomeScreen({ navigation }: any) {
         {/* Header */}
         <View style={styles.headerContainer}>
           <View>
-            <Text style={styles.greeting}>Hola 👋</Text>
+            <Text style={styles.greeting}>Hola</Text>
             <Text style={styles.welcome}>{user?.name || 'Usuario'}</Text>
           </View>
-          <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
+          <TouchableOpacity 
+            onPress={handleLogout} 
+            activeOpacity={0.7}
+          >
             <View style={styles.logoutIconWrap}>
               <Ionicons name="log-out-outline" size={22} color={PRIMARY} />
             </View>

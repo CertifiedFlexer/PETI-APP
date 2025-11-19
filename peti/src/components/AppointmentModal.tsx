@@ -12,6 +12,7 @@ import {
 import { Calendar } from "react-native-calendars";
 import { createAppointment, formatTimeDisplay, getProviderAvailability } from "../api/appointments";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import { TimeSlot } from "../types/appointments.types";
 
 interface AppointmentModalProps {
@@ -26,6 +27,7 @@ interface AppointmentModalProps {
 
 export default function AppointmentModal({ visible, onClose, provider }: AppointmentModalProps) {
     const { user, token } = useAuth();
+    const { showSuccess, showError, showWarning, showInfo } = useToast();
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [selectedTime, setSelectedTime] = useState<string>("");
     const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
@@ -54,14 +56,20 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
         try {
             const slots = await getProviderAvailability(provider.id, selectedDate, token);
             setTimeSlots(slots);
+            
+            // Notificar si no hay slots disponibles
+            const availableSlots = slots.filter(s => s.available);
+            if (availableSlots.length === 0) {
+                showInfo("No hay horarios disponibles para esta fecha");
+            }
         } catch (error) {
             console.error('Error loading availability:', error);
-            // En caso de error, mostramos los slots disponibles por defecto
+            showError("Error al cargar horarios disponibles");
             setTimeSlots([]);
         } finally {
             setLoading(false);
         }
-    }, [selectedDate, token, provider.id]);
+    }, [selectedDate, token, provider.id, showError, showInfo]);
 
     useEffect(() => {
         if (selectedDate && token) {
@@ -71,6 +79,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
 
     const handleDateSelect = (date: string) => {
         setSelectedDate(date);
+        setSelectedTime(""); // Reset time when changing date
     };
 
     const handleTimeSelect = (time: string) => {
@@ -78,21 +87,37 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     };
 
     const handleConfirmAppointment = () => {
-        console.log('🔵 Abriendo modal de confirmación');
-        if (!selectedDate || !selectedTime) {
-            console.log('❌ Error: Falta fecha u hora');
+        console.log('🔵 Validando datos para confirmar cita');
+        
+        // Validaciones
+        if (!selectedDate) {
+            showWarning("Por favor selecciona una fecha");
             return;
         }
-        if (!user || !token) {
-            console.log('❌ Error: No hay sesión');
+
+        if (!selectedTime) {
+            showWarning("Por favor selecciona una hora");
             return;
         }
+
+        if (!user) {
+            showError("No se pudo identificar el usuario. Inicia sesión nuevamente");
+            return;
+        }
+
+        if (!token) {
+            showError("Sesión expirada. Por favor inicia sesión nuevamente");
+            return;
+        }
+
+        console.log('✅ Validación pasó, abriendo modal de confirmación');
         setShowConfirmModal(true);
     };
 
     const handleCreateAppointment = async () => {
         setShowConfirmModal(false);
         setIsBooking(true);
+        
         try {
             const appointmentData = {
                 providerId: provider.id,
@@ -105,17 +130,31 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                 duration: 60
             };
             
-            console.log('📤 Enviando datos:', appointmentData);
+            console.log('📤 Creando cita con datos:', appointmentData);
             
             await createAppointment(appointmentData, token!);
 
             console.log('✅ Cita creada exitosamente');
+            showSuccess("Cita agendada correctamente");
             
-            // Cerrar modal y resetear
-            onClose();
-        } catch (error) {
+            // Cerrar modal después de un pequeño delay
+            setTimeout(() => {
+                onClose();
+            }, 1500);
+
+        } catch (error: any) {
             console.error('❌ Error al crear cita:', error);
-            // Aquí podrías mostrar otro modal de error si quieres
+            
+            // Manejo específico de errores
+            if (error.message === 'Este horario ya está ocupado') {
+                showError("Este horario ya no está disponible");
+            } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+                showError("Error de conexión. Verifica tu internet");
+            } else if (error.message.includes('timeout')) {
+                showError("La solicitud tardó demasiado. Intenta de nuevo");
+            } else {
+                showError(error.message || "Error al crear la cita");
+            }
         } finally {
             setIsBooking(false);
         }
@@ -124,13 +163,18 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     const formatDate = (dateString: string): string => {
         if (!dateString) return '';
         
-        const date = new Date(dateString + 'T00:00:00');
-        return date.toLocaleDateString('es-ES', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        try {
+            const date = new Date(dateString + 'T00:00:00');
+            return date.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return dateString;
+        }
     };
 
     const markedDates = selectedDate ? {
@@ -271,6 +315,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                                     </>
                                 ) : (
                                     <View style={styles.emptyContainer}>
+                                        <Ionicons name="calendar-outline" size={48} color="#ccc" />
                                         <Text style={styles.emptyText}>No hay horarios disponibles</Text>
                                     </View>
                                 )}
@@ -282,10 +327,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                             <TouchableOpacity
                                 testID="confirm-appointment-button"
                                 style={[styles.confirmButton, isBooking && styles.confirmButtonDisabled]}
-                                onPress={() => {
-                                    console.log('🟢 BOTÓN PRESIONADO - Confirmar Cita');
-                                    handleConfirmAppointment();
-                                }}
+                                onPress={handleConfirmAppointment}
                                 disabled={isBooking}
                                 activeOpacity={0.7}
                             >
@@ -367,6 +409,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     );
 }
 
+// Estilos (mismos del original)
 const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
@@ -433,6 +476,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#666",
         marginBottom: 16,
+        textTransform: 'capitalize',
     },
     emptyContainer: {
         padding: 40,
@@ -441,6 +485,7 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 14,
         color: "#999",
+        marginTop: 12,
     },
     timeBlockTitle: {
         fontSize: 14,
@@ -514,7 +559,6 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         color: "#fff",
     },
-    // Estilos del Modal de Confirmación
     confirmModalOverlay: {
         flex: 1,
         backgroundColor: "rgba(0, 0, 0, 0.6)",

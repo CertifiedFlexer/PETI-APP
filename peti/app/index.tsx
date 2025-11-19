@@ -4,6 +4,7 @@ import React from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import { ToastProvider } from "../src/context/ToastContext";
 import HomeStackNavigator from "../src/navigation/HomeStackNavigator";
 import ProfileStackNavigator from "../src/navigation/ProfileStackNavigator";
 import LoginScreen from "../src/screens/LoginScreen";
@@ -66,7 +67,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   );
 }
