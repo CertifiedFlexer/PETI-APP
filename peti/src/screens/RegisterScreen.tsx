@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -10,6 +9,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useToast } from '../context/ToastContext';
 
 const PRIMARY = '#39C7fD';
 const INPUT_BG = '#f9f9f9';
@@ -22,28 +22,55 @@ export default function RegisterScreen() {
     const [password, setPassword] = React.useState('');
     const [phone, setPhone] = React.useState('');
     const [loading, setLoading] = React.useState(false);
+    const { showSuccess, showError, showWarning } = useToast();
 
     const validate = () => {
-        if (!name.trim() || !email.trim() || !password || !phone.trim()) {
-            Alert.alert('Error', 'Por favor completa todos los campos');
+        // Validación de campos vacíos con mensajes específicos
+        if (!name.trim()) {
+            showWarning('Por favor ingresa tu nombre');
             return false;
         }
-        // email simple regex
-        const re = /^\S+@\S+\.\S+$/;
-        if (!re.test(email)) {
-            Alert.alert('Email inválido', 'Por favor ingresa un email válido');
+
+        if (!email.trim()) {
+            showWarning('Por favor ingresa tu email');
             return false;
         }
+
+        if (!password) {
+            showWarning('Por favor ingresa una contraseña');
+            return false;
+        }
+
+        if (!phone.trim()) {
+            showWarning('Por favor ingresa tu teléfono');
+            return false;
+        }
+
+        // Validación de formato de email
+        const emailRegex = /^\S+@\S+\.\S+$/;
+        if (!emailRegex.test(email)) {
+            showError('El formato del email es inválido');
+            return false;
+        }
+
+        // Validación de longitud de contraseña
         if (password.length < 6) {
-            Alert.alert('Contraseña corta', 'La contraseña debe tener al menos 6 caracteres');
+            showWarning('La contraseña debe tener al menos 6 caracteres');
             return false;
         }
+
+        // Validación de formato de teléfono
+        if (phone.length < 7) {
+            showWarning('El teléfono debe tener al menos 7 dígitos');
+            return false;
+        }
+
         return true;
     };
 
     const handleRegister = async () => {
         console.log('🔵 Iniciando registro...');
-        console.log('Datos:', { name, email, password, phone });
+        console.log('Datos:', { name, email, password: '***', phone });
         
         if (!validate()) {
             console.log('❌ Validación falló');
@@ -61,7 +88,7 @@ export default function RegisterScreen() {
                 rol: 'admin',
             };
             
-            console.log('📤 Enviando datos:', bodyData);
+            console.log('📤 Enviando datos al servidor...');
             console.log('📡 URL:', API_URL);
             
             const response = await fetch(API_URL, {
@@ -78,34 +105,42 @@ export default function RegisterScreen() {
             console.log('📥 Response data:', data);
 
             if (!response.ok) {
-                throw new Error(data.message || 'Error al crear usuario');
+                // Manejo de errores específicos del servidor
+                if (response.status === 400) {
+                    showError(data.message || 'Datos inválidos. Verifica la información');
+                } else if (response.status === 409) {
+                    showError('Este email ya está registrado');
+                } else if (response.status === 500) {
+                    showError('Error en el servidor. Intenta más tarde');
+                } else {
+                    showError(data.message || 'Error al crear usuario');
+                }
+                return;
             }
 
             // Registro exitoso
             console.log('✅ Registro exitoso');
-            Alert.alert(
-                'Éxito',
-                'Tu cuenta ha sido creada correctamente',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            // Reset form
-                            setName('');
-                            setEmail('');
-                            setPassword('');
-                            setPhone('');
-                        }
-                    }
-                ]
-            );
+            showSuccess('Cuenta creada exitosamente');
+            
+            // Limpiar formulario después de un pequeño delay
+            setTimeout(() => {
+                setName('');
+                setEmail('');
+                setPassword('');
+                setPhone('');
+            }, 1500);
+
         } catch (error: any) {
             console.error('❌ Error en registro:', error);
-            console.error('Error completo:', JSON.stringify(error, null, 2));
-            Alert.alert(
-                'Error', 
-                error.message || 'No se pudo completar el registro. Intenta de nuevo.'
-            );
+            
+            // Manejo de errores de red
+            if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+                showError('Error de conexión. Verifica tu internet');
+            } else if (error.message.includes('timeout')) {
+                showError('La solicitud tardó demasiado. Intenta de nuevo');
+            } else {
+                showError(error.message || 'No se pudo completar el registro');
+            }
         } finally {
             setLoading(false);
             console.log('🔵 Proceso finalizado');
@@ -117,7 +152,10 @@ export default function RegisterScreen() {
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <ScrollView 
+                contentContainerStyle={styles.container} 
+                keyboardShouldPersistTaps="handled"
+            >
                 <Text style={styles.header}>Crear cuenta</Text>
 
                 <View style={styles.field}>
@@ -128,6 +166,7 @@ export default function RegisterScreen() {
                         placeholder="Tu nombre"
                         style={styles.input}
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
@@ -141,6 +180,7 @@ export default function RegisterScreen() {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
@@ -149,10 +189,11 @@ export default function RegisterScreen() {
                     <TextInput
                         value={password}
                         onChangeText={setPassword}
-                        placeholder="••••••••"
+                        placeholder="Mínimo 6 caracteres"
                         style={styles.input}
                         secureTextEntry
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
@@ -165,18 +206,24 @@ export default function RegisterScreen() {
                         style={styles.input}
                         keyboardType="phone-pad"
                         returnKeyType="done"
+                        editable={!loading}
                     />
                 </View>
 
                 <TouchableOpacity
                     onPress={handleRegister}
-                    style={[styles.submit, loading ? { opacity: 0.7 } : {}]}
+                    style={[styles.submit, loading && styles.submitDisabled]}
                     disabled={loading}
+                    activeOpacity={0.8}
                 >
-                    <Text style={styles.submitText}>{loading ? 'Creando...' : 'Crear cuenta'}</Text>
+                    <Text style={styles.submitText}>
+                        {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+                    </Text>
                 </TouchableOpacity>
 
-                <Text style={styles.note}>Al registrarte aceptas los términos y condiciones.</Text>
+                <Text style={styles.note}>
+                    Al registrarte aceptas los términos y condiciones.
+                </Text>
             </ScrollView>
         </KeyboardAvoidingView>
     );
@@ -221,6 +268,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         marginBottom: 12,
+    },
+    submitDisabled: {
+        opacity: 0.6,
     },
     submitText: {
         color: '#fff',

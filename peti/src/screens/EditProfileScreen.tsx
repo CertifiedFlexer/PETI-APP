@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
@@ -19,6 +19,7 @@ const API_URL = "http://localhost:3000/api/users";
 
 export default function EditProfileScreen({ navigation }: any) {
     const { user, updateUser } = useAuth();
+    const { showSuccess, showError, showWarning } = useToast();
 
     const [name, setName] = useState(user?.name || "");
     const [email, setEmail] = useState(user?.email || "");
@@ -26,27 +27,41 @@ export default function EditProfileScreen({ navigation }: any) {
 
     const validate = () => {
         if (!name.trim()) {
-            Alert.alert("Error", "El nombre no puede estar vacío");
+            showWarning("Por favor ingresa tu nombre");
             return false;
         }
+
         if (!email.trim()) {
-            Alert.alert("Error", "El email no puede estar vacío");
+            showWarning("Por favor ingresa tu email");
             return false;
         }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            Alert.alert("Error", "Por favor ingresa un email válido");
+            showError("El formato del email es inválido");
             return false;
         }
+
+        // Validar si realmente hubo cambios
+        if (name === user?.name && email === user?.email) {
+            showWarning("No has realizado ningún cambio");
+            return false;
+        }
+
         return true;
     };
 
     const handleSave = async () => {
         if (!validate()) return;
 
+        if (!user?.userId) {
+            showError("No se pudo identificar el usuario");
+            return;
+        }
+
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/${user?.userId}`, {
+            const response = await fetch(`${API_URL}/${user.userId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -57,7 +72,17 @@ export default function EditProfileScreen({ navigation }: any) {
 
             if (!response.ok) {
                 const errorData = (await response.json()) as { message?: string };
-                throw new Error(errorData.message || "Error al actualizar perfil");
+                
+                if (response.status === 400) {
+                    showError(errorData.message || "Datos inválidos");
+                } else if (response.status === 409) {
+                    showError("Este email ya está en uso");
+                } else if (response.status === 404) {
+                    showError("Usuario no encontrado");
+                } else {
+                    showError(errorData.message || "Error al actualizar perfil");
+                }
+                return;
             }
 
             // Actualizar contexto con nuevos datos
@@ -66,15 +91,21 @@ export default function EditProfileScreen({ navigation }: any) {
                 email: email,
             });
 
-            Alert.alert("Éxito", "Perfil actualizado correctamente", [
-                {
-                    text: "OK",
-                    onPress: () => navigation.goBack(),
-                },
-            ]);
+            showSuccess("Perfil actualizado correctamente");
+            
+            // Volver a la pantalla anterior después de un pequeño delay
+            setTimeout(() => {
+                navigation.goBack();
+            }, 1500);
+
         } catch (error: any) {
-            Alert.alert("Error", error.message || "No se pudo actualizar el perfil");
             console.error("Error updating profile:", error);
+            
+            if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+                showError("Error de conexión. Verifica tu internet");
+            } else {
+                showError(error.message || "No se pudo actualizar el perfil");
+            }
         } finally {
             setLoading(false);
         }
@@ -84,7 +115,11 @@ export default function EditProfileScreen({ navigation }: any) {
         <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <TouchableOpacity 
+                    onPress={() => navigation.goBack()} 
+                    style={styles.backButton}
+                    disabled={loading}
+                >
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Editar Perfil</Text>
@@ -101,7 +136,10 @@ export default function EditProfileScreen({ navigation }: any) {
                         <View style={styles.avatar}>
                             <Ionicons name="person" size={50} color="#fff" />
                         </View>
-                        <TouchableOpacity style={styles.changePhotoButton}>
+                        <TouchableOpacity 
+                            style={styles.changePhotoButton}
+                            disabled={loading}
+                        >
                             <Text style={styles.changePhotoText}>Cambiar foto</Text>
                         </TouchableOpacity>
                     </View>
@@ -116,6 +154,7 @@ export default function EditProfileScreen({ navigation }: any) {
                                 placeholder="Tu nombre"
                                 style={styles.input}
                                 returnKeyType="next"
+                                editable={!loading}
                             />
                         </View>
 
@@ -129,13 +168,14 @@ export default function EditProfileScreen({ navigation }: any) {
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                                 returnKeyType="done"
+                                editable={!loading}
                             />
                         </View>
 
                         <View style={styles.infoBox}>
                             <Ionicons name="information-circle" size={20} color={PRIMARY} />
                             <Text style={styles.infoText}>
-                                Algunos cambios pueden requerir que vuelvas a iniciar sesión
+                                Los cambios se guardarán inmediatamente
                             </Text>
                         </View>
                     </View>
@@ -143,8 +183,9 @@ export default function EditProfileScreen({ navigation }: any) {
                     {/* Botón guardar */}
                     <TouchableOpacity
                         onPress={handleSave}
-                        style={[styles.saveButton, loading && { opacity: 0.7 }]}
+                        style={[styles.saveButton, loading && styles.saveButtonDisabled]}
                         disabled={loading}
+                        activeOpacity={0.8}
                     >
                         <Text style={styles.saveButtonText}>
                             {loading ? "Guardando..." : "Guardar Cambios"}
@@ -255,6 +296,9 @@ const styles = StyleSheet.create({
         shadowRadius: 12,
         shadowOffset: { width: 0, height: 4 },
         elevation: 5,
+    },
+    saveButtonDisabled: {
+        opacity: 0.6,
     },
     saveButtonText: {
         color: "#fff",

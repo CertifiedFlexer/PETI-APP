@@ -1,7 +1,6 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as React from 'react';
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +11,7 @@ import {
     View,
 } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const PRIMARY = '#39C7fD';
 const INPUT_BG = '#f9f9f9';
@@ -33,6 +33,7 @@ export default function RegisterPetScreen(_props: Props) {
     const [peso, setPeso] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const { user } = React.useContext(AuthContext);
+    const { showSuccess, showError, showWarning } = useToast();
 
     const validate = () => {
         console.log('🔍 Validando campos:');
@@ -42,13 +43,40 @@ export default function RegisterPetScreen(_props: Props) {
         console.log('  - Fecha:', fechaNacimiento, '| Válido:', !!fechaNacimiento.trim());
         console.log('  - Peso:', peso, '| Válido:', !!peso.trim());
 
+        // Validar campos requeridos
         if (!nombre.trim()) {
-            Alert.alert('Error', 'Por favor ingresa el nombre de tu mascota');
+            showWarning('Por favor ingresa el nombre de tu mascota');
             return false;
         }
+
         if (!especie.trim()) {
-            Alert.alert('Error', 'Por favor ingresa la especie');
+            showWarning('Por favor ingresa la especie de tu mascota');
             return false;
+        }
+
+        // Validaciones opcionales pero con formato
+        if (peso && isNaN(Number(peso))) {
+            showError('El peso debe ser un número válido');
+            return false;
+        }
+
+        if (peso && Number(peso) <= 0) {
+            showError('El peso debe ser mayor a 0');
+            return false;
+        }
+
+        if (peso && Number(peso) > 500) {
+            showWarning('El peso parece muy alto. Verifica el valor');
+            return false;
+        }
+
+        // Validar formato de fecha si se proporciona
+        if (fechaNacimiento) {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$|^\d{2}\/\d{2}\/\d{4}$/;
+            if (!dateRegex.test(fechaNacimiento)) {
+                showError('Formato de fecha inválido. Usa DD/MM/YYYY o YYYY-MM-DD');
+                return false;
+            }
         }
 
         return true;
@@ -56,8 +84,13 @@ export default function RegisterPetScreen(_props: Props) {
 
     const handleRegisterPet = async () => {
         console.log('🔵 Iniciando registro de mascota...');
-        console.log('user: ', user);
+        console.log('Usuario:', user?.userId);
         console.log('Datos:', { nombre, especie, raza, fechaNacimiento, peso });
+        
+        if (!user?.userId) {
+            showError('No se pudo identificar el usuario. Inicia sesión nuevamente');
+            return;
+        }
         
         if (!validate()) {
             console.log('❌ Validación falló');
@@ -73,8 +106,8 @@ export default function RegisterPetScreen(_props: Props) {
                 especie,
                 raza: raza || null,
                 fecha_nacimiento: fechaNacimiento || null,
-                peso: Number(peso) || null,
-                id_usuario: user?.userId
+                peso: peso ? Number(peso) : null,
+                id_usuario: user.userId
             };
             
             console.log('📤 Enviando datos:', bodyData);
@@ -91,34 +124,40 @@ export default function RegisterPetScreen(_props: Props) {
             console.log('📥 Response status:', response.status);
 
             if (!response.ok) {
-                throw new Error('Error al registrar mascota');
+                const errorData = await response.json().catch(() => ({})) as { message?: string };
+                
+                if (response.status === 400) {
+                    showError(errorData.message || 'Datos inválidos. Verifica la información');
+                } else if (response.status === 500) {
+                    showError('Error en el servidor. Intenta más tarde');
+                } else {
+                    showError(errorData.message || 'Error al registrar mascota');
+                }
+                return;
             }
 
             console.log('✅ Registro de mascota exitoso');
-            Alert.alert(
-                'Éxito',
-                'Tu mascota ha sido registrada correctamente',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            // Reset form
-                            setNombre('');
-                            setEspecie('');
-                            setRaza('');
-                            setFechaNacimiento('');
-                            setPeso('');
-                        }
-                    }
-                ]
-            );
+            showSuccess('Mascota registrada correctamente');
+            
+            // Limpiar formulario después de un pequeño delay
+            setTimeout(() => {
+                setNombre('');
+                setEspecie('');
+                setRaza('');
+                setFechaNacimiento('');
+                setPeso('');
+            }, 1500);
+
         } catch (error: any) {
             console.error('❌ Error en registro:', error);
-            console.error('Error completo:', JSON.stringify(error, null, 2));
-            Alert.alert(
-                'Error', 
-                error.message || 'No se pudo completar el registro. Intenta de nuevo.'
-            );
+            
+            if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+                showError('Error de conexión. Verifica tu internet');
+            } else if (error.message.includes('timeout')) {
+                showError('La solicitud tardó demasiado. Intenta de nuevo');
+            } else {
+                showError(error.message || 'No se pudo completar el registro');
+            }
         } finally {
             setLoading(false);
             console.log('🔵 Proceso finalizado');
@@ -130,55 +169,66 @@ export default function RegisterPetScreen(_props: Props) {
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <ScrollView 
+                contentContainerStyle={styles.container} 
+                keyboardShouldPersistTaps="handled"
+            >
                 <Text style={styles.header}>Registrar Mascota</Text>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Nombre</Text>
+                    <Text style={styles.label}>
+                        Nombre <Text style={styles.required}>*</Text>
+                    </Text>
                     <TextInput
                         value={nombre}
                         onChangeText={setNombre}
                         placeholder="Nombre de tu mascota"
                         style={styles.input}
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Especie</Text>
+                    <Text style={styles.label}>
+                        Especie <Text style={styles.required}>*</Text>
+                    </Text>
                     <TextInput
                         value={especie}
                         onChangeText={setEspecie}
                         placeholder="Perro, Gato, Ave, etc."
                         style={styles.input}
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Raza</Text>
+                    <Text style={styles.label}>Raza (Opcional)</Text>
                     <TextInput
                         value={raza}
                         onChangeText={setRaza}
                         placeholder="Labrador, Siamés, etc."
                         style={styles.input}
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Fecha de Nacimiento</Text>
+                    <Text style={styles.label}>Fecha de Nacimiento (Opcional)</Text>
                     <TextInput
                         value={fechaNacimiento}
                         onChangeText={setFechaNacimiento}
                         placeholder="DD/MM/YYYY o YYYY-MM-DD"
                         style={styles.input}
                         returnKeyType="next"
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Peso (kg)</Text>
+                    <Text style={styles.label}>Peso en kg (Opcional)</Text>
                     <TextInput
                         value={peso}
                         onChangeText={setPeso}
@@ -186,13 +236,15 @@ export default function RegisterPetScreen(_props: Props) {
                         style={styles.input}
                         keyboardType="decimal-pad"
                         returnKeyType="done"
+                        editable={!loading}
                     />
                 </View>
 
                 <TouchableOpacity
                     onPress={handleRegisterPet}
-                    style={[styles.submit, loading ? { opacity: 0.7 } : {}]}
+                    style={[styles.submit, loading && styles.submitDisabled]}
                     disabled={loading}
+                    activeOpacity={0.8}
                 >
                     <Text style={styles.submitText}>
                         {loading ? 'Registrando...' : 'Registrar Mascota'}
@@ -200,7 +252,8 @@ export default function RegisterPetScreen(_props: Props) {
                 </TouchableOpacity>
 
                 <Text style={styles.note}>
-                    Podrás editar esta información más tarde desde tu perfil.
+                    <Text style={styles.required}>* </Text>
+                    Campos obligatorios
                 </Text>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -228,6 +281,11 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#666',
         marginBottom: 6,
+        fontWeight: '600',
+    },
+    required: {
+        color: '#EF5350',
+        fontWeight: '700',
     },
     input: {
         height: 48,
@@ -246,6 +304,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: 'center',
         marginBottom: 12,
+    },
+    submitDisabled: {
+        opacity: 0.6,
     },
     submitText: {
         color: '#fff',

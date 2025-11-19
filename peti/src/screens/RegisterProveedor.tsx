@@ -1,7 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
 import {
-    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
@@ -12,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { AuthContext } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
@@ -32,31 +32,41 @@ export default function RegisterBusinessScreen(_props: Props) {
     const [descripcion, setDescripcion] = React.useState("");
     const [loading, setLoading] = React.useState(false);
     const { user } = React.useContext(AuthContext);
+    const { showSuccess, showError, showWarning } = useToast();
 
     const validate = () => {
+        // Validar campos vacíos con mensajes específicos
         if (!nombreNegocio.trim()) {
-            Alert.alert("Error", "Por favor ingresa el nombre del negocio");
+            showWarning("Por favor ingresa el nombre del negocio");
             return false;
         }
+
         if (!tipoServicio.trim()) {
-            Alert.alert("Error", "Por favor ingresa el tipo de servicio");
+            showWarning("Por favor ingresa el tipo de servicio");
             return false;
         }
+
         if (!telefono.trim()) {
-            Alert.alert("Error", "Por favor ingresa un número de teléfono");
+            showWarning("Por favor ingresa el número de teléfono");
             return false;
         }
-        if (!/^\d{7,15}$/.test(telefono)) {
-            Alert.alert("Error", "El teléfono debe contener solo números (7-15 dígitos)");
-            return false;
-        }
+
         if (!email.trim()) {
-            Alert.alert("Error", "Por favor ingresa un correo electrónico");
+            showWarning("Por favor ingresa el correo electrónico");
             return false;
         }
+
+        // Validar formato de teléfono
+        const phoneRegex = /^\d{7,15}$/;
+        if (!phoneRegex.test(telefono)) {
+            showError("El teléfono debe contener solo números (7-15 dígitos)");
+            return false;
+        }
+
+        // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            Alert.alert("Error", "Por favor ingresa un correo electrónico válido");
+            showError("El formato del email es inválido");
             return false;
         }
 
@@ -64,6 +74,11 @@ export default function RegisterBusinessScreen(_props: Props) {
     };
 
     const handleRegisterBusiness = async () => {
+        if (!user?.userId) {
+            showError("No se pudo identificar el usuario. Inicia sesión nuevamente");
+            return;
+        }
+
         if (!validate()) return;
 
         setLoading(true);
@@ -73,9 +88,11 @@ export default function RegisterBusinessScreen(_props: Props) {
                 tipo_servicio: tipoServicio,
                 telefono,
                 email,
-                id_usuario: user?.userId,
-                descripcion
+                id_usuario: user.userId,
+                descripcion: descripcion || null
             };
+
+            console.log('📤 Enviando datos:', bodyData);
 
             const response = await fetch(API_URL, {
                 method: "POST",
@@ -83,27 +100,44 @@ export default function RegisterBusinessScreen(_props: Props) {
                 body: JSON.stringify(bodyData),
             });
 
+            console.log('📥 Response status:', response.status);
+
             if (!response.ok) {
-                throw new Error("Error al registrar el negocio");
+                const errorData = await response.json().catch(() => ({})) as { message?: string };
+                
+                if (response.status === 400) {
+                    showError(errorData.message || "Datos inválidos. Verifica la información");
+                } else if (response.status === 409) {
+                    showError("Este email ya está registrado");
+                } else if (response.status === 500) {
+                    showError("Error en el servidor. Intenta más tarde");
+                } else {
+                    showError(errorData.message || "Error al registrar el negocio");
+                }
+                return;
             }
 
-            Alert.alert("Éxito", "El negocio ha sido registrado correctamente", [
-                {
-                    text: "OK",
-                    onPress: () => {
-                        setNombreNegocio("");
-                        setTipoServicio("");
-                        setTelefono("");
-                        setEmail("");
-                    },
-                },
-            ]);
+            showSuccess("Negocio registrado correctamente");
+            
+            // Limpiar formulario después de un pequeño delay
+            setTimeout(() => {
+                setNombreNegocio("");
+                setTipoServicio("");
+                setTelefono("");
+                setEmail("");
+                setDescripcion("");
+            }, 1500);
+
         } catch (error: any) {
-            Alert.alert(
-                "Error",
-                error.message || "No se pudo completar el registro. Intenta de nuevo."
-            );
             console.error("❌ Error en registro:", error);
+            
+            if (error.message === 'Network request failed' || error.message.includes('fetch')) {
+                showError("Error de conexión. Verifica tu internet");
+            } else if (error.message.includes('timeout')) {
+                showError("La solicitud tardó demasiado. Intenta de nuevo");
+            } else {
+                showError(error.message || "No se pudo completar el registro");
+            }
         } finally {
             setLoading(false);
         }
@@ -121,48 +155,49 @@ export default function RegisterBusinessScreen(_props: Props) {
                 <Text style={styles.header}>Registrar Negocio</Text>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Nombre del negocio</Text>
+                    <Text style={styles.label}>
+                        Nombre del negocio <Text style={styles.required}>*</Text>
+                    </Text>
                     <TextInput
                         value={nombreNegocio}
                         onChangeText={setNombreNegocio}
                         placeholder="Ej: Pet Shop La 80"
                         style={styles.input}
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Descripción</Text>
-                    <TextInput
-                        value={descripcion}
-                        onChangeText={setDescripcion}
-                        placeholder="Ej: Tienda de mascotas y accesorios"
-                        style={styles.input}
-                    />
-                </View>
-
-                <View style={styles.field}>
-                    <Text style={styles.label}>Tipo de servicio</Text>
+                    <Text style={styles.label}>
+                        Tipo de servicio <Text style={styles.required}>*</Text>
+                    </Text>
                     <TextInput
                         value={tipoServicio}
                         onChangeText={setTipoServicio}
                         placeholder="Veterinaria, Peluquería, Tienda, etc."
                         style={styles.input}
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Teléfono</Text>
+                    <Text style={styles.label}>
+                        Teléfono <Text style={styles.required}>*</Text>
+                    </Text>
                     <TextInput
                         value={telefono}
                         onChangeText={setTelefono}
                         placeholder="Ej: 3204567890"
                         style={styles.input}
                         keyboardType="phone-pad"
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.field}>
-                    <Text style={styles.label}>Correo electrónico</Text>
+                    <Text style={styles.label}>
+                        Correo electrónico <Text style={styles.required}>*</Text>
+                    </Text>
                     <TextInput
                         value={email}
                         onChangeText={setEmail}
@@ -170,13 +205,29 @@ export default function RegisterBusinessScreen(_props: Props) {
                         style={styles.input}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        editable={!loading}
+                    />
+                </View>
+
+                <View style={styles.field}>
+                    <Text style={styles.label}>Descripción (Opcional)</Text>
+                    <TextInput
+                        value={descripcion}
+                        onChangeText={setDescripcion}
+                        placeholder="Descripción breve del negocio"
+                        style={[styles.input, styles.textArea]}
+                        multiline
+                        numberOfLines={4}
+                        textAlignVertical="top"
+                        editable={!loading}
                     />
                 </View>
 
                 <TouchableOpacity
                     onPress={handleRegisterBusiness}
-                    style={[styles.submit, loading ? { opacity: 0.7 } : {}]}
+                    style={[styles.submit, loading && styles.submitDisabled]}
                     disabled={loading}
+                    activeOpacity={0.8}
                 >
                     <Text style={styles.submitText}>
                         {loading ? "Registrando..." : "Registrar Negocio"}
@@ -184,7 +235,8 @@ export default function RegisterBusinessScreen(_props: Props) {
                 </TouchableOpacity>
 
                 <Text style={styles.note}>
-                    Podrás editar esta información más tarde desde tu perfil.
+                    <Text style={styles.required}>* </Text>
+                    Campos obligatorios
                 </Text>
             </ScrollView>
         </KeyboardAvoidingView>
@@ -212,6 +264,11 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: "#666",
         marginBottom: 6,
+        fontWeight: "600",
+    },
+    required: {
+        color: "#EF5350",
+        fontWeight: "700",
     },
     input: {
         height: 48,
@@ -223,6 +280,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#111",
     },
+    textArea: {
+        height: 100,
+        paddingTop: 12,
+    },
     submit: {
         marginTop: 10,
         backgroundColor: PRIMARY,
@@ -230,6 +291,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         alignItems: "center",
         marginBottom: 12,
+    },
+    submitDisabled: {
+        opacity: 0.6,
     },
     submitText: {
         color: "#fff",
