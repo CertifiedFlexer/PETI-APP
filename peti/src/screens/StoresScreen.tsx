@@ -106,7 +106,7 @@ export default function StoresScreen({ navigation }: any) {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
+                <ActivityIndicator size="large" color="#39C7fD" />
                 <Text style={styles.loadingText}>Cargando tiendas...</Text>
             </View>
         );

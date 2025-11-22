@@ -1,9 +1,9 @@
 import { Appointment, CreateAppointmentData, TimeSlot } from '../types/appointments.types';
 
 const API_URL = "http://localhost:3000";
-const USE_MOCK_DATA = true; // 🔧 Cambiar a false cuando el backend esté listo
+const USE_MOCK_DATA = true; //  Cambiar a false cuando el backend esté listo
 
-// 🎭 STORAGE EN MEMORIA (Compatible con React Native)
+//  STORAGE EN MEMORIA (Compatible con React Native)
 let mockAppointmentsStorage: Appointment[] = [];
 
 // Horarios de trabajo: 7am-12pm y 2pm-8pm
@@ -15,7 +15,7 @@ const WORK_HOURS = {
 const APPOINTMENT_DURATION = 60; // minutos
 
 // ==========================================
-// 🎭 FUNCIONES MOCK (SIMULACIÓN EN MEMORIA)
+//  FUNCIONES MOCK (SIMULACIÓN EN MEMORIA)
 // ==========================================
 
 /**
@@ -30,7 +30,7 @@ const getMockAppointments = (): Appointment[] => {
  */
 const saveMockAppointments = (appointments: Appointment[]): void => {
     mockAppointmentsStorage = [...appointments];
-    console.log('✅ Citas guardadas en memoria:', appointments.length);
+    console.log(' Citas guardadas en memoria:', appointments.length);
 };
 
 /**
@@ -60,9 +60,9 @@ export const getProviderAppointments = async (
     date: string,
     token: string
 ): Promise<Appointment[]> => {
-    // 🎭 MODO MOCK
+    //  MODO MOCK
     if (USE_MOCK_DATA) {
-        console.log('🎭 MOCK: Obteniendo citas del proveedor', providerId, 'para', date);
+        console.log(' MOCK: Obteniendo citas del proveedor', providerId, 'para', date);
         
         // Simular delay de red
         await new Promise(resolve => setTimeout(resolve, 300));
@@ -74,11 +74,11 @@ export const getProviderAppointments = async (
             apt.status !== 'cancelled'
         );
         
-        console.log('📅 Citas encontradas:', filtered.length);
+        console.log(' Citas encontradas:', filtered.length);
         return filtered;
     }
 
-    // 🌐 MODO REAL (Backend)
+    //  MODO REAL (Backend)
     try {
         const response = await fetch(
             `${API_URL}/api/appointments/provider/${providerId}?date=${date}`,
@@ -130,7 +130,7 @@ export const getProviderAvailability = async (
             };
         });
 
-        console.log('🔍 Disponibilidad:', slotsWithAvailability.filter(s => !s.available).length, 'ocupados de', allSlots.length);
+        console.log(' Disponibilidad:', slotsWithAvailability.filter(s => !s.available).length, 'ocupados de', allSlots.length);
         return slotsWithAvailability;
     } catch (error) {
         console.error('Error fetching availability:', error);
@@ -146,10 +146,10 @@ export const createAppointment = async (
     data: CreateAppointmentData,
     token: string
 ): Promise<Appointment> => {
-    // 🎭 MODO MOCK
+    //  MODO MOCK
     if (USE_MOCK_DATA) {
-        console.log('🎭 MOCK: Creando cita...');
-        console.log('📝 Datos:', data);
+        console.log(' MOCK: Creando cita...');
+        console.log(' Datos:', data);
         
         // Simular delay de red
         await new Promise(resolve => setTimeout(resolve, 500));
@@ -182,13 +182,13 @@ export const createAppointment = async (
         allAppointments.push(newAppointment);
         saveMockAppointments(allAppointments);
         
-        console.log('✅ MOCK: Cita creada exitosamente:', newAppointment.id);
-        console.log('📊 Total de citas en sistema:', allAppointments.length);
+        console.log(' MOCK: Cita creada exitosamente:', newAppointment.id);
+        console.log(' Total de citas en sistema:', allAppointments.length);
         
         return newAppointment;
     }
 
-    // 🌐 MODO REAL (Backend)
+    //  MODO REAL (Backend)
     try {
         const response = await fetch(`${API_URL}/api/appointments`, {
             method: "POST",
@@ -226,9 +226,9 @@ export const getUserAppointments = async (
     userId: string,
     token: string
 ): Promise<Appointment[]> => {
-    // 🎭 MODO MOCK
+    //  MODO MOCK
     if (USE_MOCK_DATA) {
-        console.log('🎭 MOCK: Obteniendo citas del usuario', userId);
+        console.log(' MOCK: Obteniendo citas del usuario', userId);
         
         await new Promise(resolve => setTimeout(resolve, 300));
         
@@ -238,11 +238,11 @@ export const getUserAppointments = async (
             apt.status !== 'cancelled'
         );
         
-        console.log('👤 Citas del usuario:', userAppointments.length);
+        console.log(' Citas del usuario:', userAppointments.length);
         return userAppointments;
     }
 
-    // 🌐 MODO REAL (Backend)
+    //  MODO REAL (Backend)
     try {
         const response = await fetch(
             `${API_URL}/api/appointments/user/${userId}`,
@@ -274,9 +274,9 @@ export const cancelAppointment = async (
     appointmentId: string,
     token: string
 ): Promise<void> => {
-    // 🎭 MODO MOCK
+    //  MODO MOCK
     if (USE_MOCK_DATA) {
-        console.log('🎭 MOCK: Cancelando cita', appointmentId);
+        console.log(' MOCK: Cancelando cita', appointmentId);
         
         await new Promise(resolve => setTimeout(resolve, 300));
         
@@ -291,11 +291,11 @@ export const cancelAppointment = async (
         allAppointments[appointmentIndex].status = 'cancelled';
         saveMockAppointments(allAppointments);
         
-        console.log('❌ MOCK: Cita cancelada exitosamente');
+        console.log(' MOCK: Cita cancelada exitosamente');
         return;
     }
 
-    // 🌐 MODO REAL (Backend)
+    //  MODO REAL (Backend)
     try {
         const response = await fetch(
             `${API_URL}/api/appointments/${appointmentId}/cancel`,
@@ -319,12 +319,12 @@ export const cancelAppointment = async (
 
 /**
  * Formatear fecha para mostrar
- * ✅ VERSION CORREGIDA - Con validación robusta
+ *  VERSION CORREGIDA - Con validación robusta
  */
 export const formatDate = (dateString: string): string => {
     // Validación inicial
     if (!dateString || typeof dateString !== 'string') {
-        console.warn('⚠️ formatDate: fecha inválida', dateString);
+        console.warn(' formatDate: fecha inválida', dateString);
         return '';
     }
     
@@ -335,7 +335,7 @@ export const formatDate = (dateString: string): string => {
         
         // Validar que la fecha sea válida
         if (isNaN(date.getTime())) {
-            console.warn('⚠️ formatDate: fecha no parseable', dateString);
+            console.warn(' formatDate: fecha no parseable', dateString);
             return dateString;
         }
         
@@ -346,26 +346,26 @@ export const formatDate = (dateString: string): string => {
             day: 'numeric'
         });
     } catch (error) {
-        console.error('❌ Error en formatDate:', error);
+        console.error(' Error en formatDate:', error);
         return '';
     }
 };
 
 /**
  * Formatear hora para mostrar (24hr a 12hr con AM/PM)
- * ✅ VERSION CORREGIDA - Con validación robusta
+ *  VERSION CORREGIDA - Con validación robusta
  */
 export const formatTimeDisplay = (time24: string): string => {
     // Validación inicial
     if (!time24 || typeof time24 !== 'string') {
-        console.warn('⚠️ formatTimeDisplay: tiempo inválido', time24);
+        console.warn(' formatTimeDisplay: tiempo inválido', time24);
         return '';
     }
 
     try {
         // Validar formato básico
         if (!time24.includes(':')) {
-            console.warn('⚠️ formatTimeDisplay: formato sin ":"', time24);
+            console.warn(' formatTimeDisplay: formato sin ":"', time24);
             return time24;
         }
 
@@ -375,13 +375,13 @@ export const formatTimeDisplay = (time24: string): string => {
         
         // Validar que sean números válidos
         if (isNaN(hours) || isNaN(minutes)) {
-            console.warn('⚠️ formatTimeDisplay: números inválidos', { hours, minutes });
+            console.warn(' formatTimeDisplay: números inválidos', { hours, minutes });
             return time24;
         }
 
         // Validar rangos
         if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-            console.warn('⚠️ formatTimeDisplay: fuera de rango', { hours, minutes });
+            console.warn(' formatTimeDisplay: fuera de rango', { hours, minutes });
             return time24;
         }
         
@@ -390,14 +390,14 @@ export const formatTimeDisplay = (time24: string): string => {
         
         return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
     } catch (error) {
-        console.error('❌ Error en formatTimeDisplay:', error);
+        console.error(' Error en formatTimeDisplay:', error);
         return '';
     }
 };
 
 /**
  * Validar si una fecha es válida para agendar (no en el pasado)
- * ✅ VERSION CORREGIDA - Con validación robusta
+ *  VERSION CORREGIDA - Con validación robusta
  */
 export const isValidAppointmentDate = (date: string): boolean => {
     if (!date || typeof date !== 'string') {
@@ -416,13 +416,13 @@ export const isValidAppointmentDate = (date: string): boolean => {
         
         return selectedDate >= today;
     } catch (error) {
-        console.error('❌ Error en isValidAppointmentDate:', error);
+        console.error(' Error en isValidAppointmentDate:', error);
         return false;
     }
 };
 
 // ==========================================
-// 🛠️ UTILIDADES DE DESARROLLO
+//  UTILIDADES DE DESARROLLO
 // ==========================================
 
 /**
@@ -431,7 +431,7 @@ export const isValidAppointmentDate = (date: string): boolean => {
 export const clearMockAppointments = (): void => {
     if (USE_MOCK_DATA) {
         mockAppointmentsStorage = [];
-        console.log('🗑️ Todas las citas mock han sido eliminadas');
+        console.log(' Todas las citas mock han sido eliminadas');
     }
 };
 
@@ -441,8 +441,8 @@ export const clearMockAppointments = (): void => {
 export const debugMockAppointments = (): void => {
     if (USE_MOCK_DATA) {
         const appointments = getMockAppointments();
-        console.log('🔍 DEBUG: Citas en sistema:', appointments);
-        console.log('📊 Total:', appointments.length);
+        console.log(' DEBUG: Citas en sistema:', appointments);
+        console.log(' Total:', appointments.length);
     }
 };
 
@@ -481,6 +481,6 @@ export const createTestAppointments = (): void => {
         ];
         
         saveMockAppointments(testAppointments);
-        console.log('✅ Se crearon citas de prueba');
+        console.log(' Se crearon citas de prueba');
     }
 };

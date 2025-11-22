@@ -1,7 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as React from "react";
 import {
     KeyboardAvoidingView,
+    Modal,
     Platform,
     ScrollView,
     StyleSheet,
@@ -10,12 +12,23 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { syncRegisteredProvider } from "../api/stores";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
 const API_URL = "http://localhost:3000/api/providers";
+
+const SERVICE_TYPES = [
+    "Veterinaria",
+    "Tienda",
+    "Peluquería",
+    "Paseador",
+    "Seguro",
+] as const;
+
+type ServiceType = typeof SERVICE_TYPES[number];
 
 type RootStackParamList = {
     Main: undefined;
@@ -26,23 +39,24 @@ type Props = NativeStackScreenProps<RootStackParamList, "RegisterProveedor">;
 
 export default function RegisterBusinessScreen(_props: Props) {
     const [nombreNegocio, setNombreNegocio] = React.useState("");
-    const [tipoServicio, setTipoServicio] = React.useState("");
+    const [tipoServicio, setTipoServicio] = React.useState<ServiceType | "">("");
     const [telefono, setTelefono] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [descripcion, setDescripcion] = React.useState("");
     const [loading, setLoading] = React.useState(false);
+    const [showServiceModal, setShowServiceModal] = React.useState(false);
+    
     const { user } = React.useContext(AuthContext);
     const { showSuccess, showError, showWarning } = useToast();
 
     const validate = () => {
-        // Validar campos vacíos con mensajes específicos
         if (!nombreNegocio.trim()) {
             showWarning("Por favor ingresa el nombre del negocio");
             return false;
         }
 
         if (!tipoServicio.trim()) {
-            showWarning("Por favor ingresa el tipo de servicio");
+            showWarning("Por favor selecciona el tipo de servicio");
             return false;
         }
 
@@ -56,14 +70,12 @@ export default function RegisterBusinessScreen(_props: Props) {
             return false;
         }
 
-        // Validar formato de teléfono
         const phoneRegex = /^\d{7,15}$/;
         if (!phoneRegex.test(telefono)) {
             showError("El teléfono debe contener solo números (7-15 dígitos)");
             return false;
         }
 
-        // Validar formato de email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             showError("El formato del email es inválido");
@@ -71,6 +83,11 @@ export default function RegisterBusinessScreen(_props: Props) {
         }
 
         return true;
+    };
+
+    const handleServiceSelect = (service: ServiceType) => {
+        setTipoServicio(service);
+        setShowServiceModal(false);
     };
 
     const handleRegisterBusiness = async () => {
@@ -92,7 +109,7 @@ export default function RegisterBusinessScreen(_props: Props) {
                 descripcion: descripcion || null
             };
 
-            console.log('📤 Enviando datos:', bodyData);
+            console.log(' Enviando datos:', bodyData);
 
             const response = await fetch(API_URL, {
                 method: "POST",
@@ -100,7 +117,7 @@ export default function RegisterBusinessScreen(_props: Props) {
                 body: JSON.stringify(bodyData),
             });
 
-            console.log('📥 Response status:', response.status);
+            console.log(' Response status:', response.status);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({})) as { message?: string };
@@ -117,9 +134,22 @@ export default function RegisterBusinessScreen(_props: Props) {
                 return;
             }
 
+            const result = await response.json();
+            console.log(' Registro exitoso:', result);
+
+            // ⭐ SINCRONIZAR CON STORAGE MOCK
+            syncRegisteredProvider({
+                id_proveedor: result.id_proveedor || `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                nombre_negocio: nombreNegocio,
+                tipo_servicio: tipoServicio,
+                telefono,
+                email,
+                descripcion: descripcion || '',
+                id_usuario: user.userId
+            });
+
             showSuccess("Negocio registrado correctamente");
             
-            // Limpiar formulario después de un pequeño delay
             setTimeout(() => {
                 setNombreNegocio("");
                 setTipoServicio("");
@@ -129,7 +159,7 @@ export default function RegisterBusinessScreen(_props: Props) {
             }, 1500);
 
         } catch (error: any) {
-            console.error("❌ Error en registro:", error);
+            console.error(" Error en registro:", error);
             
             if (error.message === 'Network request failed' || error.message.includes('fetch')) {
                 showError("Error de conexión. Verifica tu internet");
@@ -171,13 +201,24 @@ export default function RegisterBusinessScreen(_props: Props) {
                     <Text style={styles.label}>
                         Tipo de servicio <Text style={styles.required}>*</Text>
                     </Text>
-                    <TextInput
-                        value={tipoServicio}
-                        onChangeText={setTipoServicio}
-                        placeholder="Veterinaria, Peluquería, Tienda, etc."
-                        style={styles.input}
-                        editable={!loading}
-                    />
+                    <TouchableOpacity
+                        style={[styles.input, styles.selectInput]}
+                        onPress={() => setShowServiceModal(true)}
+                        disabled={loading}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={[
+                            styles.selectText,
+                            !tipoServicio && styles.placeholderText
+                        ]}>
+                            {tipoServicio || "Selecciona un tipo de servicio"}
+                        </Text>
+                        <Ionicons 
+                            name="chevron-down" 
+                            size={20} 
+                            color={tipoServicio ? "#111" : "#999"} 
+                        />
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.field}>
@@ -239,6 +280,52 @@ export default function RegisterBusinessScreen(_props: Props) {
                     Campos obligatorios
                 </Text>
             </ScrollView>
+
+            {/* Modal de Selección de Tipo de Servicio */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={showServiceModal}
+                onRequestClose={() => setShowServiceModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Tipo de Servicio</Text>
+                            <TouchableOpacity
+                                onPress={() => setShowServiceModal(false)}
+                                style={styles.modalCloseButton}
+                            >
+                                <Ionicons name="close" size={28} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.modalList}>
+                            {SERVICE_TYPES.map((service) => (
+                                <TouchableOpacity
+                                    key={service}
+                                    style={[
+                                        styles.serviceOption,
+                                        tipoServicio === service && styles.serviceOptionSelected
+                                    ]}
+                                    onPress={() => handleServiceSelect(service)}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={[
+                                        styles.serviceOptionText,
+                                        tipoServicio === service && styles.serviceOptionTextSelected
+                                    ]}>
+                                        {service}
+                                    </Text>
+                                    {tipoServicio === service && (
+                                        <Ionicons name="checkmark-circle" size={24} color={PRIMARY} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 }
@@ -280,6 +367,19 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: "#111",
     },
+    selectInput: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+    },
+    selectText: {
+        fontSize: 16,
+        color: "#111",
+        flex: 1,
+    },
+    placeholderText: {
+        color: "#999",
+    },
     textArea: {
         height: 100,
         paddingTop: 12,
@@ -305,5 +405,64 @@ const styles = StyleSheet.create({
         color: "#999",
         fontSize: 12,
         marginTop: 6,
+    },
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: "flex-end",
+    },
+    modalContent: {
+        backgroundColor: "#fff",
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        paddingBottom: 20,
+        maxHeight: "70%",
+    },
+    modalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        borderBottomWidth: 1,
+        borderBottomColor: "#E8E8E8",
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: "700",
+        color: "#1A1A1A",
+    },
+    modalCloseButton: {
+        padding: 4,
+    },
+    modalList: {
+        paddingHorizontal: 20,
+        paddingTop: 12,
+    },
+    serviceOption: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        borderRadius: 12,
+        marginBottom: 8,
+        backgroundColor: "#F8F9FD",
+        borderWidth: 2,
+        borderColor: "transparent",
+    },
+    serviceOptionSelected: {
+        backgroundColor: PRIMARY + "15",
+        borderColor: PRIMARY,
+    },
+    serviceOptionText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#1A1A1A",
+    },
+    serviceOptionTextSelected: {
+        color: PRIMARY,
+        fontWeight: "700",
     },
 });

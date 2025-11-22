@@ -106,7 +106,7 @@ export default function WalkersScreen({ navigation }: any) {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
+                <ActivityIndicator size="large" color="#39C7fD" />
                 <Text style={styles.loadingText}>Cargando paseadores...</Text>
             </View>
         );
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     retryButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#39C7fD',
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 12,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         marginTop: 24,
         gap: 8,
-        shadowColor: "#4CAF50",
+        shadowColor: "#39C7fD",
         shadowOpacity: 0.3,
         shadowRadius: 8,
         shadowOffset: { width: 0, height: 4 },

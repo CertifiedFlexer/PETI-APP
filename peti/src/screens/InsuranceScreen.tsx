@@ -56,7 +56,7 @@ export default function InsuranceScreen({ navigation }: any) {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4CAF50" />
+                <ActivityIndicator size="large" color="#39C7fD" />
                 <Text style={styles.loadingText}>Cargando seguros...</Text>
             </View>
         );
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     emptyStateContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
     emptyStateTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A', marginTop: 20, marginBottom: 8 },
     emptyStateText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-    retryButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4CAF50', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, gap: 8 },
+    retryButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#39C7fD', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, gap: 8 },
     retryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
     header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#E8E8E8" },
     backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
@@ -205,6 +205,6 @@ const styles = StyleSheet.create({
     sectionText: { fontSize: 15, color: "#666", lineHeight: 22 },
     infoRow: { flexDirection: "row", alignItems: "center" },
     infoText: { fontSize: 15, color: "#1A1A1A", marginLeft: 12, flex: 1 },
-    appointmentButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#4CAF50", paddingVertical: 16, borderRadius: 12, marginTop: 24, gap: 8, shadowColor: "#4CAF50", shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
+    appointmentButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#39C7fD", paddingVertical: 16, borderRadius: 12, marginTop: 24, gap: 8, shadowColor: "#39C7fD", shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 },
     appointmentButtonText: { fontSize: 16, fontWeight: "700", color: "#fff" },
 });
