@@ -87,7 +87,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     };
 
     const handleConfirmAppointment = () => {
-        console.log('🔵 Validando datos para confirmar cita');
+        console.log(' Validando datos para confirmar cita');
         
         // Validaciones
         if (!selectedDate) {
@@ -110,7 +110,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
             return;
         }
 
-        console.log('✅ Validación pasó, abriendo modal de confirmación');
+        console.log(' Validación pasó, abriendo modal de confirmación');
         setShowConfirmModal(true);
     };
 
@@ -130,11 +130,11 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                 duration: 60
             };
             
-            console.log('📤 Creando cita con datos:', appointmentData);
+            console.log(' Creando cita con datos:', appointmentData);
             
             await createAppointment(appointmentData, token!);
 
-            console.log('✅ Cita creada exitosamente');
+            console.log(' Cita creada exitosamente');
             showSuccess("Cita agendada correctamente");
             
             // Cerrar modal después de un pequeño delay
@@ -143,7 +143,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
             }, 1500);
 
         } catch (error: any) {
-            console.error('❌ Error al crear cita:', error);
+            console.error(' Error al crear cita:', error);
             
             // Manejo específico de errores
             if (error.message === 'Este horario ya está ocupado') {
@@ -180,7 +180,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
     const markedDates = selectedDate ? {
         [selectedDate]: {
             selected: true,
-            selectedColor: '#4CAF50'
+            selectedColor: '#39C7fD'
         }
     } : {};
 
@@ -205,7 +205,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                     <ScrollView showsVerticalScrollIndicator={false}>
                         {/* Información del proveedor */}
                         <View style={styles.providerInfo}>
-                            <Ionicons name="business" size={24} color="#4CAF50" />
+                            <Ionicons name="business" size={24} color="#0d7592" />
                             <View style={styles.providerText}>
                                 <Text style={styles.providerName}>{provider.name}</Text>
                                 <Text style={styles.providerCategory}>{provider.category}</Text>
@@ -220,8 +220,8 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                                 markedDates={markedDates}
                                 minDate={today}
                                 theme={{
-                                    todayTextColor: '#4CAF50',
-                                    arrowColor: '#4CAF50',
+                                    todayTextColor: '#0d7592',
+                                    arrowColor: '#0d7592',
                                     monthTextColor: '#1A1A1A',
                                     textMonthFontWeight: 'bold',
                                     textDayFontSize: 16,
@@ -242,7 +242,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
 
                                 {loading ? (
                                     <View style={styles.loadingContainer}>
-                                        <ActivityIndicator size="large" color="#4CAF50" />
+                                        <ActivityIndicator size="large" color="#39C7fD" />
                                         <Text style={styles.loadingText}>Cargando horarios...</Text>
                                     </View>
                                 ) : timeSlots.length > 0 ? (
@@ -357,7 +357,7 @@ export default function AppointmentModal({ visible, onClose, provider }: Appoint
                 <View style={styles.confirmModalOverlay}>
                     <View style={styles.confirmModalContent}>
                         <View style={styles.confirmIconContainer}>
-                            <Ionicons name="calendar-outline" size={48} color="#4CAF50" />
+                            <Ionicons name="calendar-outline" size={48} color="#39C7fD" />
                         </View>
                         
                         <Text style={styles.confirmTitle}>Confirmar Cita</Text>
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     },
     providerCategory: {
         fontSize: 14,
-        color: "#4CAF50",
+        color: "#39C7fD",
         fontWeight: "600",
         marginTop: 2,
     },
@@ -511,8 +511,8 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     timeSlotSelected: {
-        backgroundColor: "#4CAF50",
-        borderColor: "#4CAF50",
+        backgroundColor: "#39C7fD",
+        borderColor: "#39C7fD",
     },
     timeSlotOccupied: {
         backgroundColor: "#F5F5F5",
@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#4CAF50",
+        backgroundColor: "#39C7fD",
         marginHorizontal: 20,
         marginTop: 20,
         paddingVertical: 16,
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
         color: "#666",
     },
     confirmButtonGreen: {
-        backgroundColor: "#4CAF50",
+        backgroundColor: "#39C7fD",
         flexDirection: "row",
         gap: 6,
     },
