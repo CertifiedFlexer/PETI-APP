@@ -125,7 +125,7 @@ export default function MyStoresScreen({ navigation }: any) {
                             onPress={() => handleStorePress(store)}
                         >
                             <Image 
-                                source={{ uri: store.image || 'https://via.placeholder.com/400x250' }} 
+                                source={{ uri: store.image_url || 'https://via.placeholder.com/400x250' }} 
                                 style={styles.cardImage}
                             />
                             <View style={styles.cardContent}>

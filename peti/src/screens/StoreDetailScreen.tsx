@@ -190,7 +190,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ImagePicker.MediaTypeOptions.image_urls,
             allowsEditing: true,
             aspect: [16, 9],
             quality: 0.7,
@@ -284,14 +284,14 @@ export default function StoreDetailScreen({ route, navigation }: any) {
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
             >
-                <View style={styles.imageContainer}>
+                <View style={styles.image_urlContainer}>
                     <Image 
-                        source={{ uri: store.image || 'https://via.placeholder.com/400x250' }} 
+                        source={{ uri: store.image_url || 'https://via.placeholder.com/400x250' }} 
                         style={styles.storeImage}
                     />
                     {isEditing && (
                         <TouchableOpacity 
-                            style={styles.imageEditOverlay}
+                            style={styles.image_urlEditOverlay}
                             onPress={handleImagePick}
                             disabled={isUploadingImage}
                         >
@@ -300,7 +300,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
                             ) : (
                                 <>
                                     <Ionicons name="camera" size={40} color="#fff" />
-                                    <Text style={styles.imageEditText}>Cambiar imagen</Text>
+                                    <Text style={styles.image_urlEditText}>Cambiar imagen</Text>
                                 </>
                             )}
                         </TouchableOpacity>

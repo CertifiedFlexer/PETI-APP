@@ -99,7 +99,7 @@ export default function InsuranceScreen({ navigation }: any) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {data.map((provider) => (
                     <TouchableOpacity key={provider.id_proveedor} style={styles.card} activeOpacity={0.9} onPress={() => openDetail(provider)}>
-                        <Image source={{ uri: provider.image || 'https://via.placeholder.com/400x250' }} style={styles.cardImage} />
+                        <Image source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} style={styles.cardImage} />
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
                                 <Text style={styles.cardName}>{provider.nombre_negocio || 'Sin nombre'}</Text>
@@ -123,7 +123,7 @@ export default function InsuranceScreen({ navigation }: any) {
                         </TouchableOpacity>
                         {selectedProvider && (
                             <ScrollView showsVerticalScrollIndicator={false}>
-                                <Image source={{ uri: selectedProvider.image }} style={styles.modalImage} />
+                                <Image source={{ uri: selectedProvider.image_url }} style={styles.modalImage} />
                                 <View style={styles.modalBody}>
                                     <Text style={styles.modalName}>{selectedProvider.nombre_negocio}</Text>
                                     <Text style={styles.modalCategory}>{selectedProvider.tipo_servicio}</Text>

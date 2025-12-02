@@ -11,7 +11,7 @@ export interface Store {
     telefono: string;
     email: string;
     descripcion: string;
-    image: string; // Base64 o URL
+    image_url: string; // Base64 o URL
     puntuacion: number;
     direccion: string;
     id_usuario: string;
@@ -56,7 +56,6 @@ export const getUserStores = async (userId: string, token: string): Promise<Stor
         return userStores;
     }
 
-    //  MODO REAL (Backend)
     try {
         const response = await fetch(`${API_URL}/api/providers/user/${userId}`, {
             method: "GET",
@@ -70,16 +69,13 @@ export const getUserStores = async (userId: string, token: string): Promise<Stor
             throw new Error("Error al obtener tus tiendas");
         }
 
-        return await response.json();
+        return await response.json() as Store[];
     } catch (error) {
         console.error('Error fetching user stores:', error);
         throw error;
     }
 };
 
-/**
- * Actualizar información de una tienda
- */
 export const updateStore = async (
     storeId: string,
     data: UpdateStoreData,
@@ -127,7 +123,7 @@ export const updateStore = async (
             throw new Error(errorData.message || "Error al actualizar la tienda");
         }
 
-        return await response.json();
+        return await response.json() as Store;
     } catch (error) {
         console.error('Error updating store:', error);
         throw error;
@@ -156,7 +152,7 @@ export const updateStoreImage = async (
         }
         
         // Actualizar imagen
-        allStores[storeIndex].image = imageBase64;
+        allStores[storeIndex].image_url = imageBase64;
         saveMockStores(allStores);
         
         console.log(' MOCK: Imagen actualizada exitosamente');
@@ -178,7 +174,7 @@ export const updateStoreImage = async (
             throw new Error("Error al actualizar la imagen");
         }
 
-        return await response.json();
+        return await response.json() as Store;
     } catch (error) {
         console.error('Error updating image:', error);
         throw error;
@@ -235,7 +231,7 @@ export const syncRegisteredProvider = (providerData: {
         const newStore: Store = {
             ...providerData,
             descripcion: providerData.descripcion || '',
-            image: 'https://via.placeholder.com/400x250',
+            image_url: 'https://via.placeholder.com/400x250',
             puntuacion: 0.0,
             direccion: ''
         };

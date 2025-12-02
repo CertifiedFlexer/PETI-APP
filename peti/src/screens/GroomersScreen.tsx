@@ -164,7 +164,7 @@ export default function GroomersScreen({ navigation }: any) {
                         onPress={() => openDetail(provider)}
                     >
                         <Image 
-                            source={{ uri: provider.image || 'https://via.placeholder.com/400x250' }} 
+                            source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} 
                             style={styles.cardImage}
                         />
                         <View style={styles.cardContent}>
@@ -205,7 +205,7 @@ export default function GroomersScreen({ navigation }: any) {
                         {selectedProvider && (
                             <ScrollView showsVerticalScrollIndicator={false}>
                                 <Image
-                                    source={{ uri: selectedProvider.image }}
+                                    source={{ uri: selectedProvider.image_url }}
                                     style={styles.modalImage}
                                 />
                                 <View style={styles.modalBody}>
