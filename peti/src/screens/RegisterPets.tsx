@@ -36,7 +36,7 @@ export default function RegisterPetScreen(_props: Props) {
     const { showSuccess, showError, showWarning } = useToast();
 
     const validate = () => {
-        console.log('🔍 Validando campos:');
+        console.log(' Validando campos:');
         console.log('  - Nombre:', nombre, '| Válido:', !!nombre.trim());
         console.log('  - Especie:', especie, '| Válido:', !!especie.trim());
         console.log('  - Raza:', raza, '| Válido:', !!raza.trim());
@@ -83,7 +83,7 @@ export default function RegisterPetScreen(_props: Props) {
     };
 
     const handleRegisterPet = async () => {
-        console.log('🔵 Iniciando registro de mascota...');
+        console.log(' Iniciando registro de mascota...');
         console.log('Usuario:', user?.userId);
         console.log('Datos:', { nombre, especie, raza, fechaNacimiento, peso });
         
@@ -93,11 +93,11 @@ export default function RegisterPetScreen(_props: Props) {
         }
         
         if (!validate()) {
-            console.log('❌ Validación falló');
+            console.log(' Validación falló');
             return;
         }
         
-        console.log('✅ Validación pasó');
+        console.log(' Validación pasó');
         setLoading(true);
         
         try {
@@ -110,8 +110,8 @@ export default function RegisterPetScreen(_props: Props) {
                 id_usuario: user.userId
             };
             
-            console.log('📤 Enviando datos:', bodyData);
-            console.log('📡 URL:', API_URL);
+            console.log(' Enviando datos:', bodyData);
+            console.log(' URL:', API_URL);
             
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -121,7 +121,7 @@ export default function RegisterPetScreen(_props: Props) {
                 body: JSON.stringify(bodyData),
             });
 
-            console.log('📥 Response status:', response.status);
+            console.log(' Response status:', response.status);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({})) as { message?: string };
@@ -136,7 +136,7 @@ export default function RegisterPetScreen(_props: Props) {
                 return;
             }
 
-            console.log('✅ Registro de mascota exitoso');
+            console.log(' Registro de mascota exitoso');
             showSuccess('Mascota registrada correctamente');
             
             // Limpiar formulario después de un pequeño delay
@@ -149,7 +149,7 @@ export default function RegisterPetScreen(_props: Props) {
             }, 1500);
 
         } catch (error: any) {
-            console.error('❌ Error en registro:', error);
+            console.error(' Error en registro:', error);
             
             if (error.message === 'Network request failed' || error.message.includes('fetch')) {
                 showError('Error de conexión. Verifica tu internet');
@@ -160,7 +160,7 @@ export default function RegisterPetScreen(_props: Props) {
             }
         } finally {
             setLoading(false);
-            console.log('🔵 Proceso finalizado');
+            console.log(' Proceso finalizado');
         }
     };
 

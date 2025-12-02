@@ -7,25 +7,26 @@ import { useToast } from "../context/ToastContext";
 const PRIMARY = '#39C7fD';
 
 const options = [
-  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#2196F3', bg: '#FFF0F5', navigateTo: 'Stores' },
-  { key: 'vets', label: 'Veterinarias', icon: 'medical', color: '#4CAF50', bg: '#F1F8F4', navigateTo: 'Vets' },
-  { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#FF9800', bg: '#FFF8F0', navigateTo: 'Groomers' },
-  { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#2196F3', bg: '#F0F7FF', navigateTo: 'Walkers' },
-  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#4CAF50', bg: '#F8F0FF', navigateTo: 'Insurance' },
-  { key: 'RegisterProveedor', label: 'Registrar Proveedor', icon: 'briefcase', color: '#FF5722', bg: '#FFF4E5', navigateTo: 'RegisterProveedor' },
-  { key: 'RegisterPet', label: 'Registrar Mascota', icon: 'paw', color: '#9C27B0', bg: '#F5E8FF', navigateTo: 'RegisterPet' },
+  { key: 'stores', label: 'Tiendas', icon: 'cart', color: '#0d7592', bg: '#ecfeff', navigateTo: 'Stores' },
+  { key: 'vets', label: 'Veterinarias', icon: 'medical', color: '#66e7fa', bg: '#ecfeff', navigateTo: 'Vets' },
+  { key: 'groomers', label: 'Peluquerías', icon: 'cut', color: '#66e7fa', bg: '#ecfeff', navigateTo: 'Groomers' },
+  { key: 'walkers', label: 'Paseadores', icon: 'walk', color: '#0d7592', bg: '#ecfeff', navigateTo: 'Walkers' },
+  { key: 'insurance', label: 'Seguros', icon: 'shield-checkmark', color: '#0d7592', bg: '#ecfeff', navigateTo: 'Insurance' },
+  { key: 'myStores', label: 'Mis Tiendas', icon: 'storefront', color: '#66e7fa', bg: '#ecfeff', navigateTo: 'MyStores' },
+  { key: 'RegisterProveedor', label: 'Registrar Proveedor', icon: 'briefcase', color: '#66e7fa', bg: '#ecfeff', navigateTo: 'RegisterProveedor' },
+  { key: 'RegisterPet', label: 'Registrar Mascota', icon: 'paw', color: '#0d7592', bg: '#ecfeff', navigateTo: 'RegisterPet' },
 ];
 
 export default function HomeScreen({ navigation }: any) {
   const { user, logout } = useContext(AuthContext);
-  const { showSuccess, showError, showInfo } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const handleLogout = async () => {
     try {
       await logout();
       showSuccess("Sesión cerrada correctamente");
     } catch (error: any) {
-      console.error('❌ Error al cerrar sesión:', error);
+      console.error(' Error al cerrar sesión:', error);
       
       if (error.message === 'Network request failed' || error.message.includes('fetch')) {
         showError("Error de conexión al cerrar sesión");

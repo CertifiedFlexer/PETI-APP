@@ -69,15 +69,15 @@ export default function RegisterScreen() {
     };
 
     const handleRegister = async () => {
-        console.log('🔵 Iniciando registro...');
+        console.log(' Iniciando registro...');
         console.log('Datos:', { name, email, password: '***', phone });
         
         if (!validate()) {
-            console.log('❌ Validación falló');
+            console.log(' Validación falló');
             return;
         }
         
-        console.log('✅ Validación pasó');
+        console.log(' Validación pasó');
         setLoading(true);
         
         try {
@@ -88,8 +88,8 @@ export default function RegisterScreen() {
                 rol: 'admin',
             };
             
-            console.log('📤 Enviando datos al servidor...');
-            console.log('📡 URL:', API_URL);
+            console.log(' Enviando datos al servidor...');
+            console.log(' URL:', API_URL);
             
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -99,10 +99,10 @@ export default function RegisterScreen() {
                 body: JSON.stringify(bodyData),
             });
 
-            console.log('📥 Response status:', response.status);
+            console.log(' Response status:', response.status);
             
             const data = (await response.json()) as { message?: string };
-            console.log('📥 Response data:', data);
+            console.log(' Response data:', data);
 
             if (!response.ok) {
                 // Manejo de errores específicos del servidor
@@ -119,7 +119,7 @@ export default function RegisterScreen() {
             }
 
             // Registro exitoso
-            console.log('✅ Registro exitoso');
+            console.log(' Registro exitoso');
             showSuccess('Cuenta creada exitosamente');
             
             // Limpiar formulario después de un pequeño delay
@@ -131,7 +131,7 @@ export default function RegisterScreen() {
             }, 1500);
 
         } catch (error: any) {
-            console.error('❌ Error en registro:', error);
+            console.error(' Error en registro:', error);
             
             // Manejo de errores de red
             if (error.message === 'Network request failed' || error.message.includes('fetch')) {
@@ -143,7 +143,7 @@ export default function RegisterScreen() {
             }
         } finally {
             setLoading(false);
-            console.log('🔵 Proceso finalizado');
+            console.log(' Proceso finalizado');
         }
     };
 
