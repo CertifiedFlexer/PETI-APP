@@ -1,6 +1,6 @@
 import { Appointment, CreateAppointmentData, TimeSlot } from '../types/appointments.types';
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://peti-back.onrender.com";
 const USE_MOCK_DATA = true; //  Cambiar a false cuando el backend esté listo
 
 //  STORAGE EN MEMORIA (Compatible con React Native)

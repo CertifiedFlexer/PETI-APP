@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000"
+const API_URL = "https://peti-back.onrender.com0"
 
 interface AuthResponse {
   success: string,

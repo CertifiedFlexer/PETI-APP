@@ -1,5 +1,5 @@
-// stores.ts
-const API_URL = "http://localhost:3000";
+import { Platform } from "react-native";
+const API_URL = "https://peti-back.onrender.com";
 
 export interface Store {
     id_proveedor: string;
@@ -147,99 +147,55 @@ export const updateStore = async (
 /**
  * Actualizar imagen de la tienda usando FormData multipart/form-data
  */
+
 export const updateStoreImage = async (
-    storeId: string,
-    imageUri: string,
-    token: string
-): Promise<Store> => {
-    console.log('📤 updateStoreImage - Iniciando...');
-    console.log('🏪 Store ID:', storeId);
-    console.log('🖼️ Image URI:', imageUri?.substring(0, 100));
+  storeId: string,
+  imageUri: string,
+  token: string
+) => {
+  console.log("📤 updateStoreImage");
+  const url = `${API_URL}/api/providers/${storeId}/image`;
 
-    if (!storeId || !imageUri || !token) {
-        throw new Error("Todos los parámetros son requeridos");
-    }
+  const formData = new FormData();
 
-    const url = `${API_URL}/providers/update-image`;
-    console.log('🌐 URL:', url);
+  let file: any;
 
-    try {
-        const formData = new FormData();
-        
-        // Extraer nombre y tipo de archivo
-        const filename = imageUri.split('/').pop() || 'image.jpg';
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
+  if (Platform.OS === "web") {
+    // WEB: convertir blob URL a File
+    const blobRes = await fetch(imageUri);
+    const blob = await blobRes.blob();
 
-        // Agregar imagen al FormData
-        formData.append('image', {
-            uri: imageUri,
-            name: filename,
-            type: type,
-        } as any);
+    file = new File([blob], "image.jpg", { type: blob.type });
 
-        // Agregar ID del proveedor
-        formData.append('id_proveedor', storeId);
+  } else {
+    // MOBILE (iOS/Android)
+    const filename = imageUri.split("/").pop() || "image.jpg";
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : "image/jpeg";
 
-        console.log('📦 FormData preparado:');
-        console.log('   - image:', filename, type);
-        console.log('   - id_proveedor:', storeId);
+    file = {
+      uri: imageUri,
+      name: filename,
+      type: type,
+    };
+  }
 
-        const response = await fetch(url, {
-            method: "PUT",
-            body: formData,
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                // No establecer Content-Type manualmente
-                // FormData lo configura automáticamente como multipart/form-data
-            },
-        });
+  formData.append("image", file);
+  formData.append("id_proveedor", storeId);
 
-        console.log('📡 Response status:', response.status);
+  const response = await fetch(url, {
+    method: "POST",
+    body: formData,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-        const responseText = await response.text();
-        console.log('📄 Response preview:', responseText.substring(0, 200));
+  if (!response.ok) {
+    throw new Error(`Error: ${await response.text()}`);
+  }
 
-        if (!response.ok) {
-            let errorData: ApiErrorResponse = {};
-            
-            try {
-                errorData = JSON.parse(responseText);
-            } catch (e) {
-                console.warn('⚠️ No se pudo parsear error como JSON');
-            }
-            
-            switch (response.status) {
-                case 400:
-                    throw new Error("Imagen inválida o datos faltantes");
-                case 401:
-                    throw new Error("Sesión expirada");
-                case 404:
-                    throw new Error("Tienda no encontrada");
-                case 413:
-                    throw new Error("La imagen es demasiado grande");
-                case 415:
-                    throw new Error("Tipo de imagen no soportado");
-                case 500:
-                    throw new Error("Error del servidor al procesar la imagen");
-                default:
-                    throw new Error(errorData.message || "Error al actualizar la imagen");
-            }
-        }
-
-        const result = JSON.parse(responseText) as Store;
-        console.log('✅ Imagen actualizada exitosamente');
-        console.log('🖼️ Nueva image_url:', result.image_url?.substring(0, 50));
-        
-        return result;
-    } catch (error) {
-        console.error('💥 Error en updateStoreImage:', error);
-        
-        if (error instanceof Error) {
-            throw error;
-        }
-        throw new Error("Error de conexión al subir imagen");
-    }
+  return response.json();
 };
 
 export const syncRegisteredProvider = (providerData: {
