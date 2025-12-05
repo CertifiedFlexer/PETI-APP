@@ -12,7 +12,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { syncRegisteredProvider } from "../api/stores";
 import { AuthContext } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -33,11 +32,12 @@ type ServiceType = typeof SERVICE_TYPES[number];
 type RootStackParamList = {
     Main: undefined;
     RegisterProveedor: { userId?: string } | undefined;
+    MyStores: { refresh?: boolean; timestamp?: number } | undefined;
 };
 
 type Props = NativeStackScreenProps<RootStackParamList, "RegisterProveedor">;
 
-export default function RegisterBusinessScreen(_props: Props) {
+export default function RegisterBusinessScreen(props: Props) {
     const [nombreNegocio, setNombreNegocio] = React.useState("");
     const [tipoServicio, setTipoServicio] = React.useState<ServiceType | "">("");
     const [telefono, setTelefono] = React.useState("");
@@ -109,7 +109,7 @@ export default function RegisterBusinessScreen(_props: Props) {
                 descripcion: descripcion || null
             };
 
-            console.log(' Enviando datos:', bodyData);
+            console.log('📤 Enviando datos:', bodyData);
 
             const response = await fetch(API_URL, {
                 method: "POST",
@@ -117,7 +117,7 @@ export default function RegisterBusinessScreen(_props: Props) {
                 body: JSON.stringify(bodyData),
             });
 
-            console.log(' Response status:', response.status);
+            console.log('📨 Response status:', response.status);
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({})) as { message?: string };
@@ -135,31 +135,30 @@ export default function RegisterBusinessScreen(_props: Props) {
             }
 
             const result = await response.json();
-            console.log(' Registro exitoso:', result);
-
-            // ⭐ SINCRONIZAR CON STORAGE MOCK
-            syncRegisteredProvider({
-                id_proveedor: result.id_proveedor || `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                nombre_negocio: nombreNegocio,
-                tipo_servicio: tipoServicio,
-                telefono,
-                email,
-                descripcion: descripcion || '',
-                id_usuario: user.userId
-            });
+            console.log('✅ Registro exitoso:', result);
 
             showSuccess("Negocio registrado correctamente");
             
+            // Limpiar formulario
+            setNombreNegocio("");
+            setTipoServicio("");
+            setTelefono("");
+            setEmail("");
+            setDescripcion("");
+            
+            // 🔄 NAVEGAR A MIS TIENDAS con refresh automático
             setTimeout(() => {
-                setNombreNegocio("");
-                setTipoServicio("");
-                setTelefono("");
-                setEmail("");
-                setDescripcion("");
+                if (props.navigation) {
+                    // Navegar a MyStores con parámetro de refresh
+                    props.navigation.navigate('MyStores', { 
+                        refresh: true,
+                        timestamp: Date.now() 
+                    });
+                }
             }, 1500);
 
         } catch (error: any) {
-            console.error(" Error en registro:", error);
+            console.error("❌ Error en registro:", error);
             
             if (error.message === 'Network request failed' || error.message.includes('fetch')) {
                 showError("Error de conexión. Verifica tu internet");

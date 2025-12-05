@@ -58,16 +58,6 @@ export default function ProfileScreen({ navigation }: any) {
             </View>
 
             <View style={styles.divider} />
-
-            <View style={styles.infoRow}>
-              <View style={styles.infoIcon}>
-                <Ionicons name="id-card-outline" size={22} color={PRIMARY} />
-              </View>
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>ID de Usuario</Text>
-                <Text style={styles.infoValue}>{user?.userId || 'No disponible'}</Text>
-              </View>
-            </View>
           </View>
         </View>
 

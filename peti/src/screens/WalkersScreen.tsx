@@ -11,8 +11,13 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { getPromotionStatus } from "../api/payments";
 import AppointmentModal from "../components/AppointmentModal";
+import { PromotedBadge } from "../components/PromotedBadge";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { PromotionStatus } from "../types/payments.types";
+import { sortProvidersByPromotion } from "../utils/sortProviders";
 
 interface Provider {
     id_proveedor: string;
@@ -21,16 +26,18 @@ interface Provider {
     telefono: string;
     email: string;
     descripcion: string;
-    image: string;
+    image_url: string;
     puntuacion: number;
     direccion: string;
+    promotion?: PromotionStatus;
 }
 
 export default function WalkersScreen({ navigation }: any) {
+    const { token } = useAuth();
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<Provider[]>([]);
     const [loading, setLoading] = useState(true);
     const { showError, showInfo } = useToast();
 
@@ -55,13 +62,13 @@ export default function WalkersScreen({ navigation }: any) {
                 return;
             }
 
-            const json = await response.json();
+            const json = await response.json() as Provider[];
             
             if (!json || json.length === 0) {
                 showInfo("No hay paseadores disponibles en este momento");
                 setData([]);
             } else {
-                setData(json as any[]);
+                await fetchPromotions(json);
             }
 
         } catch (error: any) {
@@ -77,6 +84,33 @@ export default function WalkersScreen({ navigation }: any) {
             setData([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchPromotions = async (providers: Provider[]) => {
+        if (!token) {
+            setData(providers);
+            return;
+        }
+
+        try {
+            const providersWithPromotions = await Promise.all(
+                providers.map(async (provider) => {
+                    try {
+                        const promotionStatus = await getPromotionStatus(provider.id_proveedor, token);
+                        return { ...provider, promotion: promotionStatus };
+                    } catch (error) {
+                        console.log(`No promotion data for provider ${provider.id_proveedor}`);
+                        return provider;
+                    }
+                })
+            );
+
+            const sortedProviders = sortProvidersByPromotion(providersWithPromotions);
+            setData(sortedProviders);
+        } catch (error) {
+            console.error('Error fetching promotions:', error);
+            setData(providers);
         }
     };
 
@@ -167,6 +201,11 @@ export default function WalkersScreen({ navigation }: any) {
                             source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} 
                             style={styles.cardImage}
                         />
+                        {provider.promotion?.is_promoted && (
+                            <View style={styles.promotedBadgeContainer}>
+                                <PromotedBadge variant="small" />
+                            </View>
+                        )}
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
                                 <Text style={styles.cardName}>
@@ -208,6 +247,11 @@ export default function WalkersScreen({ navigation }: any) {
                                     source={{ uri: selectedProvider.image_url }}
                                     style={styles.modalImage}
                                 />
+                                {selectedProvider.promotion?.is_promoted && (
+                                    <View style={styles.modalPromotedBadge}>
+                                        <PromotedBadge variant="medium" />
+                                    </View>
+                                )}
                                 <View style={styles.modalBody}>
                                     <Text style={styles.modalName}>{selectedProvider.nombre_negocio}</Text>
                                     <Text style={styles.modalCategory}>{selectedProvider.tipo_servicio}</Text>
@@ -267,7 +311,6 @@ export default function WalkersScreen({ navigation }: any) {
     );
 }
 
-// Estilos (mismo código que las otras pantallas de proveedores)
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -363,6 +406,12 @@ const styles = StyleSheet.create({
         height: 180,
         backgroundColor: "#E8E8E8",
     },
+    promotedBadgeContainer: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        zIndex: 1,
+    },
     cardContent: {
         padding: 16,
     },
@@ -431,6 +480,12 @@ const styles = StyleSheet.create({
         width: "100%",
         height: 250,
         backgroundColor: "#E8E8E8",
+    },
+    modalPromotedBadge: {
+        position: 'absolute',
+        top: 16,
+        left: 16,
+        zIndex: 1,
     },
     modalBody: {
         padding: 24,

@@ -11,8 +11,13 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { getPromotionStatus } from "../api/payments";
 import AppointmentModal from "../components/AppointmentModal";
+import { PromotedBadge } from "../components/PromotedBadge";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { PromotionStatus } from "../types/payments.types";
+import { sortProvidersByPromotion } from "../utils/sortProviders";
 
 interface Provider {
     id_proveedor: string;
@@ -21,16 +26,22 @@ interface Provider {
     telefono: string;
     email: string;
     descripcion: string;
-    image: string;
+    image_url: string;
     puntuacion: number;
     direccion: string;
 }
 
+// Extender Provider para incluir información de promoción
+interface ProviderWithPromotion extends Provider {
+    promotion?: PromotionStatus;
+}
+
 export default function VetsScreen({ navigation }: any) {
-    const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+    const { token } = useAuth();
+    const [selectedProvider, setSelectedProvider] = useState<ProviderWithPromotion | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<ProviderWithPromotion[]>([]);
     const [loading, setLoading] = useState(true);
     const { showError, showInfo } = useToast();
 
@@ -55,13 +66,31 @@ export default function VetsScreen({ navigation }: any) {
                 return;
             }
 
-            const json = await response.json();
+            const json = (await response.json()) as Provider[];
             
             if (!json || json.length === 0) {
                 showInfo("No hay veterinarias disponibles en este momento");
                 setData([]);
             } else {
-                setData(json as any[]);
+                // Obtener estado de promoción para cada proveedor
+                const providersWithPromotion = await Promise.all(
+                    json.map(async (provider) => {
+                        try {
+                            if (token) {
+                                const promotion = await getPromotionStatus(provider.id_proveedor, token);
+                                return { ...provider, promotion };
+                            }
+                            return provider;
+                        } catch (error) {
+                            console.error(`Error loading promotion for provider ${provider.id_proveedor}:`, error);
+                            return provider;
+                        }
+                    })
+                );
+
+                // Ordenar proveedores: promocionados primero
+                const sortedProviders = sortProvidersByPromotion(providersWithPromotion);
+                setData(sortedProviders);
             }
 
         } catch (error: any) {
@@ -80,7 +109,7 @@ export default function VetsScreen({ navigation }: any) {
         }
     };
 
-    const openDetail = (provider: Provider) => {
+    const openDetail = (provider: ProviderWithPromotion) => {
         if (!provider || !provider.id_proveedor) {
             showError("Datos del proveedor no disponibles");
             return;
@@ -163,10 +192,19 @@ export default function VetsScreen({ navigation }: any) {
                         activeOpacity={0.9}
                         onPress={() => openDetail(provider)}
                     >
-                        <Image 
-                            source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} 
-                            style={styles.cardImage}
-                        />
+                        <View style={styles.imageContainer}>
+                            <Image 
+                                source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} 
+                                style={styles.cardImage}
+                            />
+                            {/* Badge de Promocionado */}
+                            {provider.promotion?.is_promoted && (
+                                <View style={styles.promotedBadgeContainer}>
+                                    <PromotedBadge variant="small" />
+                                </View>
+                            )}
+                        </View>
+                        
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
                                 <Text style={styles.cardName}>
@@ -201,6 +239,13 @@ export default function VetsScreen({ navigation }: any) {
                         <TouchableOpacity style={styles.closeButton} onPress={closeDetail}>
                             <Ionicons name="close-circle" size={32} color="#666" />
                         </TouchableOpacity>
+
+                        {/* Badge de Promocionado en Modal */}
+                        {selectedProvider?.promotion?.is_promoted && (
+                            <View style={styles.modalPromotedBadge}>
+                                <PromotedBadge variant="medium" />
+                            </View>
+                        )}
 
                         {selectedProvider && (
                             <ScrollView showsVerticalScrollIndicator={false}>
@@ -357,10 +402,19 @@ const styles = StyleSheet.create({
         elevation: 4,
         overflow: "hidden",
     },
+    imageContainer: {
+        position: 'relative',
+    },
     cardImage: {
         width: "100%",
         height: 180,
         backgroundColor: "#E8E8E8",
+    },
+    // NUEVO: Badge en tarjetas del listado
+    promotedBadgeContainer: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
     },
     cardContent: {
         padding: 16,
@@ -425,6 +479,13 @@ const styles = StyleSheet.create({
         zIndex: 10,
         backgroundColor: "#fff",
         borderRadius: 20,
+    },
+    // NUEVO: Badge en modal de detalles
+    modalPromotedBadge: {
+        position: 'absolute',
+        top: 16,
+        right: 60,
+        zIndex: 9,
     },
     modalImage: {
         width: "100%",

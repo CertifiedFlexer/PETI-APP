@@ -1,8 +1,5 @@
+// stores.ts
 const API_URL = "http://localhost:3000";
-const USE_MOCK_DATA = true; //  Cambiar a false cuando el backend esté listo
-
-//  STORAGE EN MEMORIA
-let mockStoresStorage: Store[] = [];
 
 export interface Store {
     id_proveedor: string;
@@ -11,7 +8,7 @@ export interface Store {
     telefono: string;
     email: string;
     descripcion: string;
-    image_url: string; // Base64 o URL
+    image_url: string;
     puntuacion: number;
     direccion: string;
     id_usuario: string;
@@ -26,38 +23,22 @@ export interface UpdateStoreData {
     direccion?: string;
 }
 
-// ==========================================
-//  FUNCIONES MOCK (SIMULACIÓN EN MEMORIA)
-// ==========================================
+interface ApiErrorResponse {
+    message?: string;
+    error?: string;
+}
 
-const getMockStores = (): Store[] => {
-    return [...mockStoresStorage];
-};
-
-const saveMockStores = (stores: Store[]): void => {
-    mockStoresStorage = [...stores];
-    console.log(' Tiendas guardadas en memoria:', stores.length);
-};
-
-/**
- * Obtener tiendas asociadas a un usuario
- */
 export const getUserStores = async (userId: string, token: string): Promise<Store[]> => {
-    //  MODO MOCK
-    if (USE_MOCK_DATA) {
-        console.log(' MOCK: Obteniendo tiendas del usuario', userId);
-        
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        const allStores = getMockStores();
-        const userStores = allStores.filter(store => store.id_usuario === userId);
-        
-        console.log(' Tiendas encontradas:', userStores.length);
-        return userStores;
+    console.log('🔍 getUserStores - Iniciando...');
+    
+    if (!userId || !token) {
+        throw new Error("userId y token son requeridos");
     }
 
+    const url = `${API_URL}/api/providers/user/${userId}`;
+
     try {
-        const response = await fetch(`${API_URL}/api/providers/user/${userId}`, {
+        const response = await fetch(url, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
@@ -65,14 +46,51 @@ export const getUserStores = async (userId: string, token: string): Promise<Stor
             }
         });
 
+        console.log('📡 Response status:', response.status);
+
+        const responseText = await response.text();
+
         if (!response.ok) {
-            throw new Error("Error al obtener tus tiendas");
+            let errorData: ApiErrorResponse = {};
+            
+            try {
+                errorData = JSON.parse(responseText);
+            } catch (e) {
+                console.warn('⚠️ No se pudo parsear error como JSON');
+            }
+            
+            switch (response.status) {
+                case 401:
+                    throw new Error("Sesión expirada. Por favor inicia sesión nuevamente");
+                case 403:
+                    throw new Error("No tienes permisos para acceder a estos datos");
+                case 404:
+                    console.log('ℹ️ 404 - No se encontraron tiendas');
+                    return [];
+                case 500:
+                    throw new Error("Error en el servidor. Intenta más tarde");
+                default:
+                    throw new Error(errorData.message || "Error al obtener tus tiendas");
+            }
         }
 
-        return await response.json() as Store[];
+        const stores: Store[] = JSON.parse(responseText);
+        
+        if (!Array.isArray(stores)) {
+            throw new Error("Formato de respuesta inválido");
+        }
+
+        console.log(`✅ ${stores.length} tiendas encontradas`);
+        return stores;
+        
     } catch (error) {
-        console.error('Error fetching user stores:', error);
-        throw error;
+        console.error('💥 Error en getUserStores:', error);
+        
+        if (error instanceof Error) {
+            throw error;
+        }
+        
+        throw new Error("Error de conexión. Verifica tu internet");
     }
 };
 
@@ -81,33 +99,12 @@ export const updateStore = async (
     data: UpdateStoreData,
     token: string
 ): Promise<Store> => {
-    //  MODO MOCK
-    if (USE_MOCK_DATA) {
-        console.log(' MOCK: Actualizando tienda', storeId);
-        console.log(' Datos:', data);
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const allStores = getMockStores();
-        const storeIndex = allStores.findIndex(s => s.id_proveedor === storeId);
-        
-        if (storeIndex === -1) {
-            throw new Error('Tienda no encontrada');
-        }
-        
-        // Actualizar tienda
-        allStores[storeIndex] = {
-            ...allStores[storeIndex],
-            ...data
-        };
-        
-        saveMockStores(allStores);
-        
-        console.log(' MOCK: Tienda actualizada exitosamente');
-        return allStores[storeIndex];
+    console.log('🔄 updateStore - Iniciando...');
+
+    if (!storeId || !token) {
+        throw new Error("storeId y token son requeridos");
     }
 
-    //  MODO REAL (Backend)
     try {
         const response = await fetch(`${API_URL}/api/providers/${storeId}`, {
             method: "PUT",
@@ -119,105 +116,132 @@ export const updateStore = async (
         });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({})) as { message?: string };
-            throw new Error(errorData.message || "Error al actualizar la tienda");
+            const errorData = await response.json().catch(() => ({})) as ApiErrorResponse;
+            
+            switch (response.status) {
+                case 400:
+                    throw new Error(errorData.message || "Datos inválidos");
+                case 401:
+                    throw new Error("Sesión expirada");
+                case 404:
+                    throw new Error("Tienda no encontrada");
+                case 409:
+                    throw new Error("Este email ya está en uso");
+                default:
+                    throw new Error(errorData.message || "Error al actualizar la tienda");
+            }
         }
 
-        return await response.json() as Store;
+        const result = await response.json() as Store;
+        console.log('✅ Store actualizado exitosamente');
+        return result;
     } catch (error) {
-        console.error('Error updating store:', error);
-        throw error;
+        console.error('❌ Error en updateStore:', error);
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error("Error de conexión");
     }
 };
 
 /**
- * Actualizar imagen de la tienda (Base64)
+ * Actualizar imagen de la tienda usando FormData multipart/form-data
  */
 export const updateStoreImage = async (
     storeId: string,
-    imageBase64: string,
+    imageUri: string,
     token: string
 ): Promise<Store> => {
-    //  MODO MOCK
-    if (USE_MOCK_DATA) {
-        console.log(' MOCK: Actualizando imagen de tienda', storeId);
-        
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const allStores = getMockStores();
-        const storeIndex = allStores.findIndex(s => s.id_proveedor === storeId);
-        
-        if (storeIndex === -1) {
-            throw new Error('Tienda no encontrada');
-        }
-        
-        // Actualizar imagen
-        allStores[storeIndex].image_url = imageBase64;
-        saveMockStores(allStores);
-        
-        console.log(' MOCK: Imagen actualizada exitosamente');
-        return allStores[storeIndex];
+    console.log('📤 updateStoreImage - Iniciando...');
+    console.log('🏪 Store ID:', storeId);
+    console.log('🖼️ Image URI:', imageUri?.substring(0, 100));
+
+    if (!storeId || !imageUri || !token) {
+        throw new Error("Todos los parámetros son requeridos");
     }
 
-    //  MODO REAL (Backend)
+    const url = `${API_URL}/providers/update-image`;
+    console.log('🌐 URL:', url);
+
     try {
-        const response = await fetch(`${API_URL}/api/providers/${storeId}/image`, {
+        const formData = new FormData();
+        
+        // Extraer nombre y tipo de archivo
+        const filename = imageUri.split('/').pop() || 'image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        // Agregar imagen al FormData
+        formData.append('image', {
+            uri: imageUri,
+            name: filename,
+            type: type,
+        } as any);
+
+        // Agregar ID del proveedor
+        formData.append('id_proveedor', storeId);
+
+        console.log('📦 FormData preparado:');
+        console.log('   - image:', filename, type);
+        console.log('   - id_proveedor:', storeId);
+
+        const response = await fetch(url, {
             method: "PUT",
+            body: formData,
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+                "Authorization": `Bearer ${token}`,
+                // No establecer Content-Type manualmente
+                // FormData lo configura automáticamente como multipart/form-data
             },
-            body: JSON.stringify({ image: imageBase64 })
         });
 
+        console.log('📡 Response status:', response.status);
+
+        const responseText = await response.text();
+        console.log('📄 Response preview:', responseText.substring(0, 200));
+
         if (!response.ok) {
-            throw new Error("Error al actualizar la imagen");
+            let errorData: ApiErrorResponse = {};
+            
+            try {
+                errorData = JSON.parse(responseText);
+            } catch (e) {
+                console.warn('⚠️ No se pudo parsear error como JSON');
+            }
+            
+            switch (response.status) {
+                case 400:
+                    throw new Error("Imagen inválida o datos faltantes");
+                case 401:
+                    throw new Error("Sesión expirada");
+                case 404:
+                    throw new Error("Tienda no encontrada");
+                case 413:
+                    throw new Error("La imagen es demasiado grande");
+                case 415:
+                    throw new Error("Tipo de imagen no soportado");
+                case 500:
+                    throw new Error("Error del servidor al procesar la imagen");
+                default:
+                    throw new Error(errorData.message || "Error al actualizar la imagen");
+            }
         }
 
-        return await response.json() as Store;
+        const result = JSON.parse(responseText) as Store;
+        console.log('✅ Imagen actualizada exitosamente');
+        console.log('🖼️ Nueva image_url:', result.image_url?.substring(0, 50));
+        
+        return result;
     } catch (error) {
-        console.error('Error updating image:', error);
-        throw error;
+        console.error('💥 Error en updateStoreImage:', error);
+        
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error("Error de conexión al subir imagen");
     }
 };
 
-/**
- * Obtener todas las tiendas MOCK (útil para ver el storage)
- */
-export const debugMockStores = (): void => {
-    if (USE_MOCK_DATA) {
-        const stores = getMockStores();
-        console.log(' DEBUG: Tiendas en sistema:', stores);
-        console.log(' Total:', stores.length);
-    }
-};
-
-/**
- * Limpiar todas las tiendas MOCK
- */
-export const clearMockStores = (): void => {
-    if (USE_MOCK_DATA) {
-        mockStoresStorage = [];
-        console.log(' Todas las tiendas mock han sido eliminadas');
-    }
-};
-
-/**
- * Agregar tienda MOCK manualmente (útil para desarrollo)
- */
-export const addMockStore = (store: Store): void => {
-    if (USE_MOCK_DATA) {
-        const allStores = getMockStores();
-        allStores.push(store);
-        saveMockStores(allStores);
-        console.log(' Tienda MOCK agregada:', store.nombre_negocio);
-    }
-};
-
-/**
- * Sincronizar tiendas registradas con el storage MOCK
- * Llamar esto después de registrar un proveedor para agregarlo al storage
- */
 export const syncRegisteredProvider = (providerData: {
     id_proveedor: string;
     nombre_negocio: string;
@@ -227,22 +251,5 @@ export const syncRegisteredProvider = (providerData: {
     descripcion?: string;
     id_usuario: string;
 }): void => {
-    if (USE_MOCK_DATA) {
-        const newStore: Store = {
-            ...providerData,
-            descripcion: providerData.descripcion || '',
-            image_url: 'https://via.placeholder.com/400x250',
-            puntuacion: 0.0,
-            direccion: ''
-        };
-        
-        const allStores = getMockStores();
-        const exists = allStores.some(s => s.id_proveedor === newStore.id_proveedor);
-        
-        if (!exists) {
-            allStores.push(newStore);
-            saveMockStores(allStores);
-            console.log(' Proveedor sincronizado con storage MOCK');
-        }
-    }
+    console.log('✅ Proveedor registrado:', providerData.nombre_negocio);
 };
