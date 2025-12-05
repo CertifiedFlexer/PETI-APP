@@ -1,4 +1,3 @@
-// StoreDetailScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useState } from "react";
@@ -38,6 +37,18 @@ const STATUS_LABELS: Record<string, string> = {
     completed: 'Completada'
 };
 
+// Utilidad para manejar fechas sin problemas de zona horaria
+const getLocalDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getTodayString = (): string => {
+    return getLocalDateString(new Date());
+};
+
 export default function StoreDetailScreen({ route, navigation }: any) {
     const { store: initialStore } = route.params as { store: Store };
     const { token } = useAuth();
@@ -50,7 +61,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState<string>(getTodayString());
     const [editedStore, setEditedStore] = useState<Store>(store);
     const [showServiceModal, setShowServiceModal] = useState(false);
 
@@ -62,11 +73,22 @@ export default function StoreDetailScreen({ route, navigation }: any) {
 
         try {
             const dateToFetch = date || selectedDate;
+            console.log('📅 Fetching appointments for:', dateToFetch);
+            
             const data = await getProviderAppointments(store.id_proveedor, dateToFetch, token);
-            setAppointments(data);
+            
+            // Filtro adicional en el frontend como medida de seguridad
+            const filteredData = data.filter(apt => {
+                const aptDate = apt.date.split('T')[0]; // Normalizar formato
+                return aptDate === dateToFetch;
+            });
+            
+            console.log('✅ Appointments found:', filteredData.length);
+            setAppointments(filteredData);
         } catch (error) {
-            console.error('Error fetching appointments:', error);
+            console.error('❌ Error fetching appointments:', error);
             showError("Error al cargar las citas");
+            setAppointments([]);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -83,21 +105,31 @@ export default function StoreDetailScreen({ route, navigation }: any) {
     }, [selectedDate]);
 
     const handlePreviousDay = () => {
-        const currentDate = new Date(selectedDate);
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
         currentDate.setDate(currentDate.getDate() - 1);
-        setSelectedDate(currentDate.toISOString().split('T')[0]);
+        
+        const newDate = getLocalDateString(currentDate);
+        console.log('◀️ Previous day:', newDate);
+        setSelectedDate(newDate);
         setLoading(true);
     };
 
     const handleNextDay = () => {
-        const currentDate = new Date(selectedDate);
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const currentDate = new Date(year, month - 1, day);
         currentDate.setDate(currentDate.getDate() + 1);
-        setSelectedDate(currentDate.toISOString().split('T')[0]);
+        
+        const newDate = getLocalDateString(currentDate);
+        console.log('▶️ Next day:', newDate);
+        setSelectedDate(newDate);
         setLoading(true);
     };
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString + 'T00:00:00');
+        const [year, month, day] = dateString.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        
         return date.toLocaleDateString('es-ES', { 
             weekday: 'long',
             day: 'numeric',
@@ -210,7 +242,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
             setEditedStore(updatedStore);
             showSuccess("Imagen actualizada correctamente");
         } catch (error: any) {
-            console.error('Error uploading image:', error);
+            console.error('❌ Error uploading image:', error);
             
             if (error.message.includes('Network') || error.message.includes('fetch')) {
                 showError("Error de conexión. Verifica tu internet");
