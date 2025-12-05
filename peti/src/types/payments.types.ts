@@ -10,6 +10,7 @@ export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 
 export type PaymentMethod = 'pse';
 
 export interface PromotionPlan {
+    name: string;
     id: string;
     tier: PromotionTier;
     duration_days: number;
