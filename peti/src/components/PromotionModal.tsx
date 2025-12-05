@@ -98,8 +98,9 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
             setCurrentStep('payment');
             return;
         }
-
-        // Completar pago
+        try {
+            fetch(`http://localhost:3000/api/providers/${providerId}/subscription`, {
+                method: 'PUT'})
         const result = await completePayment(
             identificationType,
             identificationNumber,
@@ -115,6 +116,11 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
         } else {
             setCurrentStep('payment');
         }
+        } catch (error) {
+            console.error('Error al actualizar la suscripción:', error);
+        }
+
+        
     };
 
     const handleBack = () => {

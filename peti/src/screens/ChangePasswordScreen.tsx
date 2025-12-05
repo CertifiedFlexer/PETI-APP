@@ -15,7 +15,7 @@ import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
-const API_URL = "http://localhost:3000/api/users";
+const API_URL = "https://peti-back.onrender.com/api";
 
 export default function ChangePasswordScreen({ navigation }: any) {
     const { user } = useAuth();
@@ -78,8 +78,8 @@ export default function ChangePasswordScreen({ navigation }: any) {
 
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/${user.userId}/password`, {
-                method: "PUT",
+            const response = await fetch(`${API_URL}/users/${user.userId}/change-password`, {
+                method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     currentPassword: currentPassword,

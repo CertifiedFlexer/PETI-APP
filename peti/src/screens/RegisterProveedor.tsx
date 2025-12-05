@@ -17,7 +17,7 @@ import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
-const API_URL = "http://localhost:3000/api/providers";
+const API_URL = "https://peti-back.onrender.com/api/providers";
 
 const SERVICE_TYPES = [
     "Veterinaria",
