@@ -2,56 +2,140 @@ import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
-    Image, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View
+    Image,
+    Modal,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
+import { getPromotionStatus } from "../api/payments";
 import AppointmentModal from "../components/AppointmentModal";
+import { PromotedBadge } from "../components/PromotedBadge";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { PromotionStatus } from "../types/payments.types";
+import { sortProvidersByPromotion } from "../utils/sortProviders";
 
 interface Provider {
-    id_proveedor: string; nombre_negocio: string; tipo_servicio: string; telefono: string; email: string;
-    descripcion: string; image: string; puntuacion: number; direccion: string;
+    id_proveedor: string;
+    nombre_negocio: string;
+    tipo_servicio: string;
+    telefono: string;
+    email: string;
+    descripcion: string;
+    image_url: string;
+    puntuacion: number;
+    direccion: string;
+    promotion?: PromotionStatus;
 }
 
 export default function InsuranceScreen({ navigation }: any) {
+    const { token } = useAuth();
     const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [appointmentModalVisible, setAppointmentModalVisible] = useState(false);
-    const [data, setData] = useState<any[]>([]);
+    const [data, setData] = useState<Provider[]>([]);
     const [loading, setLoading] = useState(true);
     const { showError, showInfo } = useToast();
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        fetchData();
+    }, []);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const response = await fetch("http://localhost:3000/api/providers/service/Seguro");
+            
             if (!response.ok) {
-                if (response.status === 404) { showInfo("No hay seguros disponibles"); }
-                else if (response.status === 500) { showError("Error en el servidor. Intenta más tarde"); }
-                else { showError("Error al cargar seguros"); }
-                setData([]); return;
+                if (response.status === 404) {
+                    showInfo("No hay seguros disponibles");
+                } else if (response.status === 500) {
+                    showError("Error en el servidor. Intenta más tarde");
+                } else {
+                    showError("Error al cargar seguros");
+                }
+                setData([]);
+                return;
             }
-            const json = await response.json();
-            if (!json || json.length === 0) { showInfo("No hay seguros disponibles en este momento"); setData([]); }
-            else { setData(json as any[]); }
+
+            const json = await response.json() as Provider[];
+            
+            if (!json || json.length === 0) {
+                showInfo("No hay seguros disponibles en este momento");
+                setData([]);
+            } else {
+                await fetchPromotions(json);
+            }
+
         } catch (error: any) {
             console.log("Error:", error);
+            
             if (error.message === 'Network request failed' || error.message.includes('fetch')) {
                 showError("Error de conexión. Verifica tu internet");
-            } else if (error.message.includes('timeout')) { showError("La solicitud tardó demasiado. Intenta de nuevo"); }
-            else { showError("Error inesperado al cargar seguros"); }
+            } else if (error.message.includes('timeout')) {
+                showError("La solicitud tardó demasiado. Intenta de nuevo");
+            } else {
+                showError("Error inesperado al cargar seguros");
+            }
             setData([]);
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchPromotions = async (providers: Provider[]) => {
+        if (!token) {
+            setData(providers);
+            return;
+        }
+
+        try {
+            const providersWithPromotions = await Promise.all(
+                providers.map(async (provider) => {
+                    try {
+                        const promotionStatus = await getPromotionStatus(provider.id_proveedor, token);
+                        return { ...provider, promotion: promotionStatus };
+                    } catch (error) {
+                        console.log(`No promotion data for provider ${provider.id_proveedor}`);
+                        return provider;
+                    }
+                })
+            );
+
+            const sortedProviders = sortProvidersByPromotion(providersWithPromotions);
+            setData(sortedProviders);
+        } catch (error) {
+            console.error('Error fetching promotions:', error);
+            setData(providers);
+        }
     };
 
     const openDetail = (provider: Provider) => {
-        if (!provider || !provider.id_proveedor) { showError("Datos del proveedor no disponibles"); return; }
-        setSelectedProvider(provider); setModalVisible(true);
+        if (!provider || !provider.id_proveedor) {
+            showError("Datos del proveedor no disponibles");
+            return;
+        }
+        setSelectedProvider(provider);
+        setModalVisible(true);
     };
-    const closeDetail = () => { setModalVisible(false); setTimeout(() => setSelectedProvider(null), 300); };
-    const openAppointmentModal = () => { setModalVisible(false); setTimeout(() => setAppointmentModalVisible(true), 300); };
-    const closeAppointmentModal = () => { setAppointmentModalVisible(false); };
+
+    const closeDetail = () => {
+        setModalVisible(false);
+        setTimeout(() => setSelectedProvider(null), 300);
+    };
+
+    const openAppointmentModal = () => {
+        setModalVisible(false);
+        setTimeout(() => setAppointmentModalVisible(true), 300);
+    };
+
+    const closeAppointmentModal = () => {
+        setAppointmentModalVisible(false);
+    };
 
     if (loading) {
         return (
@@ -75,8 +159,13 @@ export default function InsuranceScreen({ navigation }: any) {
                 <View style={styles.emptyStateContainer}>
                     <Ionicons name="shield-checkmark-outline" size={80} color="#ccc" />
                     <Text style={styles.emptyStateTitle}>No hay seguros disponibles</Text>
-                    <Text style={styles.emptyStateText}>Intenta de nuevo más tarde o verifica tu conexión</Text>
-                    <TouchableOpacity style={styles.retryButton} onPress={fetchData}>
+                    <Text style={styles.emptyStateText}>
+                        Intenta de nuevo más tarde o verifica tu conexión
+                    </Text>
+                    <TouchableOpacity 
+                        style={styles.retryButton}
+                        onPress={fetchData}
+                    >
                         <Ionicons name="refresh" size={20} color="#fff" />
                         <Text style={styles.retryButtonText}>Reintentar</Text>
                     </TouchableOpacity>
@@ -88,6 +177,7 @@ export default function InsuranceScreen({ navigation }: any) {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
+
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
@@ -96,59 +186,106 @@ export default function InsuranceScreen({ navigation }: any) {
                 <View style={styles.placeholder} />
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+            >
                 {data.map((provider) => (
-                    <TouchableOpacity key={provider.id_proveedor} style={styles.card} activeOpacity={0.9} onPress={() => openDetail(provider)}>
-                        <Image source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} style={styles.cardImage} />
+                    <TouchableOpacity
+                        key={provider.id_proveedor}
+                        style={styles.card}
+                        activeOpacity={0.9}
+                        onPress={() => openDetail(provider)}
+                    >
+                        <Image 
+                            source={{ uri: provider.image_url || 'https://via.placeholder.com/400x250' }} 
+                            style={styles.cardImage}
+                        />
+                        {provider.promotion?.is_promoted && (
+                            <View style={styles.promotedBadgeContainer}>
+                                <PromotedBadge variant="small" />
+                            </View>
+                        )}
                         <View style={styles.cardContent}>
                             <View style={styles.cardHeader}>
-                                <Text style={styles.cardName}>{provider.nombre_negocio || 'Sin nombre'}</Text>
+                                <Text style={styles.cardName}>
+                                    {provider.nombre_negocio || 'Sin nombre'}
+                                </Text>
                                 <View style={styles.ratingContainer}>
                                     <Ionicons name="star" size={16} color="#FFB800" />
-                                    <Text style={styles.ratingText}>{provider.puntuacion || '0.0'}</Text>
+                                    <Text style={styles.ratingText}>
+                                        {provider.puntuacion || '0.0'}
+                                    </Text>
                                 </View>
                             </View>
-                            <Text style={styles.cardCategory}>{provider.tipo_servicio || 'Seguro'}</Text>
-                            <Text style={styles.cardDescription} numberOfLines={2}>{provider.descripcion || 'Sin descripción'}</Text>
+                            <Text style={styles.cardCategory}>
+                                {provider.tipo_servicio || 'Seguro'}
+                            </Text>
+                            <Text style={styles.cardDescription} numberOfLines={2}>
+                                {provider.descripcion || 'Sin descripción'}
+                            </Text>
                         </View>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
 
-            <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={closeDetail}>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={closeDetail}
+            >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <TouchableOpacity style={styles.closeButton} onPress={closeDetail}>
                             <Ionicons name="close-circle" size={32} color="#666" />
                         </TouchableOpacity>
+
                         {selectedProvider && (
                             <ScrollView showsVerticalScrollIndicator={false}>
-                                <Image source={{ uri: selectedProvider.image_url }} style={styles.modalImage} />
+                                <Image
+                                    source={{ uri: selectedProvider.image_url }}
+                                    style={styles.modalImage}
+                                />
+                                {selectedProvider.promotion?.is_promoted && (
+                                    <View style={styles.modalPromotedBadge}>
+                                        <PromotedBadge variant="medium" />
+                                    </View>
+                                )}
                                 <View style={styles.modalBody}>
                                     <Text style={styles.modalName}>{selectedProvider.nombre_negocio}</Text>
                                     <Text style={styles.modalCategory}>{selectedProvider.tipo_servicio}</Text>
+
                                     <View style={styles.modalRating}>
                                         <Ionicons name="star" size={20} color="#FFB800" />
                                         <Text style={styles.modalRatingText}>{selectedProvider.puntuacion}</Text>
                                         <Text style={styles.modalRatingSubtext}>(120+ reseñas)</Text>
                                     </View>
+
                                     <View style={styles.section}>
                                         <Text style={styles.sectionTitle}>Descripción</Text>
                                         <Text style={styles.sectionText}>{selectedProvider.descripcion}</Text>
                                     </View>
+
                                     <View style={styles.section}>
                                         <View style={styles.infoRow}>
                                             <Ionicons name="call" size={20} color="#2196F3" />
                                             <Text style={styles.infoText}>{selectedProvider.telefono}</Text>
                                         </View>
                                     </View>
+
                                     <View style={styles.section}>
                                         <View style={styles.infoRow}>
                                             <Ionicons name="location" size={20} color="#2196F3" />
                                             <Text style={styles.infoText}>{selectedProvider.direccion || "No disponible"}</Text>
                                         </View>
                                     </View>
-                                    <TouchableOpacity style={styles.appointmentButton} onPress={openAppointmentModal} activeOpacity={0.8}>
+
+                                    <TouchableOpacity
+                                        style={styles.appointmentButton}
+                                        onPress={openAppointmentModal}
+                                        activeOpacity={0.8}
+                                    >
                                         <Ionicons name="calendar" size={22} color="#fff" />
                                         <Text style={styles.appointmentButtonText}>Agendar Cita</Text>
                                     </TouchableOpacity>
@@ -160,8 +297,15 @@ export default function InsuranceScreen({ navigation }: any) {
             </Modal>
 
             {selectedProvider && (
-                <AppointmentModal visible={appointmentModalVisible} onClose={closeAppointmentModal}
-                    provider={{ id: selectedProvider.id_proveedor, name: selectedProvider.nombre_negocio, category: selectedProvider.tipo_servicio }} />
+                <AppointmentModal
+                    visible={appointmentModalVisible}
+                    onClose={closeAppointmentModal}
+                    provider={{
+                        id: selectedProvider.id_proveedor,
+                        name: selectedProvider.nombre_negocio,
+                        category: selectedProvider.tipo_servicio
+                    }}
+                />
             )}
         </View>
     );
@@ -183,6 +327,7 @@ const styles = StyleSheet.create({
     scrollContent: { padding: 20, paddingBottom: 40 },
     card: { backgroundColor: "#fff", borderRadius: 16, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4, overflow: "hidden" },
     cardImage: { width: "100%", height: 180, backgroundColor: "#E8E8E8" },
+    promotedBadgeContainer: { position: 'absolute', top: 12, right: 12, zIndex: 1 },
     cardContent: { padding: 16 },
     cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
     cardName: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", flex: 1 },
@@ -194,6 +339,7 @@ const styles = StyleSheet.create({
     modalContent: { backgroundColor: "#fff", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "90%", shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 16, shadowOffset: { width: 0, height: -4 }, elevation: 10 },
     closeButton: { position: "absolute", top: 16, right: 16, zIndex: 10, backgroundColor: "#fff", borderRadius: 20 },
     modalImage: { width: "100%", height: 250, backgroundColor: "#E8E8E8" },
+    modalPromotedBadge: { position: 'absolute', top: 16, left: 16, zIndex: 1 },
     modalBody: { padding: 24 },
     modalName: { fontSize: 24, fontWeight: "800", color: "#1A1A1A", marginBottom: 8 },
     modalCategory: { fontSize: 16, color: "#2196F3", fontWeight: "600", marginBottom: 12 },

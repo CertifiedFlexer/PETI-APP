@@ -1,3 +1,4 @@
+// StoreDetailScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useState } from "react";
@@ -32,7 +33,6 @@ export default function StoreDetailScreen({ route, navigation }: any) {
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-
     const [editedStore, setEditedStore] = useState<Store>(store);
 
     const fetchAppointments = async (date?: string) => {
@@ -190,38 +190,34 @@ export default function StoreDetailScreen({ route, navigation }: any) {
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.image_urls,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [16, 9],
-            quality: 0.7,
-            base64: true,
+            quality: 0.8,
         });
 
         if (!result.canceled && result.assets[0]) {
-            if (result.assets[0].base64) {
-                uploadImage(result.assets[0].base64);
-            } else {
-                showError("No se pudo procesar la imagen");
-            }
+            uploadImage(result.assets[0].uri);
         }
     };
 
-    const uploadImage = async (base64: string) => {
+    const uploadImage = async (imageUri: string) => {
         if (!token) return;
 
         setIsUploadingImage(true);
         try {
-            const imageDataUri = `data:image/jpeg;base64,${base64}`;
-            const updatedStore = await updateStoreImage(store.id_proveedor, imageDataUri, token);
+            const updatedStore = await updateStoreImage(store.id_proveedor, imageUri, token);
             
             setStore(updatedStore);
             setEditedStore(updatedStore);
             showSuccess("Imagen actualizada correctamente");
         } catch (error: any) {
+            console.error('Error uploading image:', error);
+            
             if (error.message.includes('Network') || error.message.includes('fetch')) {
                 showError("Error de conexión. Verifica tu internet");
             } else {
-                showError("Error al subir la imagen");
+                showError(error.message || "Error al subir la imagen");
             }
         } finally {
             setIsUploadingImage(false);
@@ -284,14 +280,14 @@ export default function StoreDetailScreen({ route, navigation }: any) {
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }
             >
-                <View style={styles.image_urlContainer}>
+                <View style={styles.imageContainer}>
                     <Image 
                         source={{ uri: store.image_url || 'https://via.placeholder.com/400x250' }} 
                         style={styles.storeImage}
                     />
                     {isEditing && (
                         <TouchableOpacity 
-                            style={styles.image_urlEditOverlay}
+                            style={styles.imageEditOverlay}
                             onPress={handleImagePick}
                             disabled={isUploadingImage}
                         >
@@ -300,7 +296,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
                             ) : (
                                 <>
                                     <Ionicons name="camera" size={40} color="#fff" />
-                                    <Text style={styles.image_urlEditText}>Cambiar imagen</Text>
+                                    <Text style={styles.imageEditText}>Cambiar imagen</Text>
                                 </>
                             )}
                         </TouchableOpacity>
@@ -428,7 +424,6 @@ export default function StoreDetailScreen({ route, navigation }: any) {
                             </View>
                         </View>
 
-                        {/* Date Navigator */}
                         <View style={styles.dateNavigator}>
                             <TouchableOpacity 
                                 style={styles.dateNavButton} 
@@ -494,259 +489,49 @@ export default function StoreDetailScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#F8F9FD",
-    },
-    header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingTop: 50,
-        paddingBottom: 20,
-        backgroundColor: "#fff",
-        borderBottomWidth: 1,
-        borderBottomColor: "#E8E8E8",
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: "700",
-        color: "#1A1A1A",
-    },
-    editButton: {
-        width: 40,
-        height: 40,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    imageContainer: {
-        position: 'relative',
-    },
-    storeImage: {
-        width: "100%",
-        height: 250,
-        backgroundColor: "#E8E8E8",
-    },
-    imageEditOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    imageEditText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-        marginTop: 8,
-    },
-    content: {
-        padding: 20,
-    },
-    section: {
-        marginBottom: 24,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "#1A1A1A",
-        marginBottom: 16,
-    },
-    appointmentsBadge: {
-        backgroundColor: '#39C7fD',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        minWidth: 30,
-        alignItems: 'center',
-    },
-    appointmentsBadgeText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '700',
-    },
-    dateNavigator: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E8E8E8',
-    },
-    dateNavButton: {
-        width: 44,
-        height: 44,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 12,
-        backgroundColor: '#F8F9FD',
-    },
-    dateDisplay: {
-        flex: 1,
-        alignItems: 'center',
-        paddingHorizontal: 16,
-    },
-    dateDisplayText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 4,
-        textTransform: 'capitalize',
-    },
-    dateDisplaySubtext: {
-        fontSize: 13,
-        color: '#666',
-        textTransform: 'capitalize',
-    },
-    todayButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#E8F5FD',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 8,
-        marginBottom: 16,
-        gap: 6,
-    },
-    todayButtonText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#39C7fD',
-    },
-    field: {
-        marginBottom: 16,
-    },
-    label: {
-        fontSize: 14,
-        color: "#666",
-        marginBottom: 8,
-        fontWeight: "600",
-    },
-    value: {
-        fontSize: 16,
-        color: "#1A1A1A",
-        lineHeight: 22,
-    },
-    input: {
-        height: 48,
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        paddingHorizontal: 16,
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        fontSize: 16,
-        color: "#111",
-    },
-    textArea: {
-        height: 100,
-        paddingTop: 12,
-        textAlignVertical: 'top',
-    },
-    saveButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#39C7fD',
-        paddingVertical: 14,
-        borderRadius: 12,
-        marginBottom: 24,
-        gap: 8,
-    },
-    saveButtonDisabled: {
-        opacity: 0.6,
-    },
-    saveButtonText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#fff',
-    },
-    loadingContainer: {
-        padding: 20,
-        alignItems: 'center',
-    },
-    loadingText: {
-        marginTop: 8,
-        fontSize: 14,
-        color: '#666',
-    },
-    emptyAppointments: {
-        padding: 40,
-        alignItems: 'center',
-    },
-    emptyAppointmentsText: {
-        fontSize: 14,
-        color: '#999',
-        marginTop: 12,
-        textAlign: 'center',
-    },
-    appointmentCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: '#E8E8E8',
-    },
-    appointmentHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    appointmentUserInfo: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-    },
-    appointmentUserText: {
-        marginLeft: 12,
-        flex: 1,
-    },
-    appointmentUserName: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1A1A1A',
-        marginBottom: 4,
-    },
-    appointmentTime: {
-        fontSize: 14,
-        color: '#666',
-    },
-    statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    statusConfirmed: {
-        backgroundColor: '#E8F5E9',
-    },
-    statusPending: {
-        backgroundColor: '#FFF3E0',
-    },
-    statusCancelled: {
-        backgroundColor: '#FFEBEE',
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
+    container: { flex: 1, backgroundColor: "#F8F9FD" },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#E8E8E8" },
+    backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+    headerTitle: { fontSize: 20, fontWeight: "700", color: "#1A1A1A" },
+    editButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+    imageContainer: { position: 'relative' },
+    storeImage: { width: "100%", height: 250, backgroundColor: "#E8E8E8" },
+    imageEditOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.6)', alignItems: 'center', justifyContent: 'center' },
+    imageEditText: { color: '#fff', fontSize: 16, fontWeight: '600', marginTop: 8 },
+    content: { padding: 20 },
+    section: { marginBottom: 24 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+    sectionTitle: { fontSize: 18, fontWeight: "700", color: "#1A1A1A", marginBottom: 16 },
+    appointmentsBadge: { backgroundColor: '#39C7fD', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, minWidth: 30, alignItems: 'center' },
+    appointmentsBadgeText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+    dateNavigator: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 16, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#E8E8E8' },
+    dateNavButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#F8F9FD' },
+    dateDisplay: { flex: 1, alignItems: 'center', paddingHorizontal: 16 },
+    dateDisplayText: { fontSize: 18, fontWeight: '700', color: '#1A1A1A', marginBottom: 4, textTransform: 'capitalize' },
+    dateDisplaySubtext: { fontSize: 13, color: '#666', textTransform: 'capitalize' },
+    todayButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8F5FD', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginBottom: 16, gap: 6 },
+    todayButtonText: { fontSize: 14, fontWeight: '600', color: '#39C7fD' },
+    field: { marginBottom: 16 },
+    label: { fontSize: 14, color: "#666", marginBottom: 8, fontWeight: "600" },
+    value: { fontSize: 16, color: "#1A1A1A", lineHeight: 22 },
+    input: { height: 48, backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 16, borderWidth: 1, borderColor: "#E0E0E0", fontSize: 16, color: "#111" },
+    textArea: { height: 100, paddingTop: 12, textAlignVertical: 'top' },
+    saveButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#39C7fD', paddingVertical: 14, borderRadius: 12, marginBottom: 24, gap: 8 },
+    saveButtonDisabled: { opacity: 0.6 },
+    saveButtonText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+    loadingContainer: { padding: 20, alignItems: 'center' },
+    loadingText: { marginTop: 8, fontSize: 14, color: '#666' },
+    emptyAppointments: { padding: 40, alignItems: 'center' },
+    emptyAppointmentsText: { fontSize: 14, color: '#999', marginTop: 12, textAlign: 'center' },
+    appointmentCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E8E8E8' },
+    appointmentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    appointmentUserInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+    appointmentUserText: { marginLeft: 12, flex: 1 },
+    appointmentUserName: { fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
+    appointmentTime: { fontSize: 14, color: '#666' },
+    statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+    statusConfirmed: { backgroundColor: '#E8F5E9' },
+    statusPending: { backgroundColor: '#FFF3E0' },
+    statusCancelled: { backgroundColor: '#FFEBEE' },
+    statusText: { fontSize: 12, fontWeight: '600' },
 });
