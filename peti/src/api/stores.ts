@@ -185,7 +185,7 @@ export const updateStoreImage = async (
 
   const response = await fetch(url, {
     method: "POST",
-    body: formData,
+        body: formData as any,
     headers: {
       Authorization: `Bearer ${token}`,
     },

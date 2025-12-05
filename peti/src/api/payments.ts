@@ -30,6 +30,7 @@ const MOCK_PSE_BANKS: PSEBank[] = [
 const PROMOTION_PLANS: PromotionPlan[] = [
     {
         id: 'top10-monthly',
+        name: 'Top 10 - Mensual',
         tier: 'top10',
         duration_days: 30,
         price: 0, // Gratis para desarrollo
@@ -69,7 +70,7 @@ export const getPromotionPlans = async (): Promise<PromotionPlan[]> => {
             throw new Error("Error al obtener planes de promoción");
         }
 
-        return await response.json();
+        return await response.json() as PromotionPlan[];
     } catch (error) {
         console.error('Error fetching promotion plans:', error);
         throw error;
@@ -96,7 +97,7 @@ export const getPSEBanks = async (): Promise<PSEBank[]> => {
             throw new Error("Error al obtener bancos PSE");
         }
 
-        return await response.json();
+        return await response.json() as PSEBank[];
     } catch (error) {
         console.error('Error fetching PSE banks:', error);
         throw error;
@@ -147,7 +148,7 @@ export const createPaymentIntent = async (
             throw new Error(errorData.message || "Error al crear intención de pago");
         }
 
-        return await response.json();
+        return await response.json() as PaymentIntent;
     } catch (error) {
         console.error('Error creating payment intent:', error);
         throw error;
@@ -200,7 +201,7 @@ export const processPayment = async (
             throw new Error(errorData.message || "Error al procesar el pago");
         }
 
-        return await response.json();
+        return await response.json() as PaymentResult;
     } catch (error) {
         console.error('Error processing payment:', error);
         throw error;
@@ -257,7 +258,7 @@ export const activatePromotion = async (
             throw new Error(errorData.message || "Error al activar promoción");
         }
 
-        return await response.json();
+        return await response.json() as PromotionStatus;
     } catch (error) {
         console.error('Error activating promotion:', error);
         throw error;
@@ -312,7 +313,7 @@ export const getPromotionStatus = async (
             throw new Error("Error al obtener estado de promoción");
         }
 
-        return await response.json();
+        return await response.json() as PromotionStatus;
     } catch (error) {
         console.error('Error fetching promotion status:', error);
         throw error;

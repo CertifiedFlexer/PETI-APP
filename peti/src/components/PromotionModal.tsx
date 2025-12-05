@@ -99,7 +99,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
             return;
         }
         try {
-            fetch(`http://localhost:3000/api/providers/${providerId}/subscription`, {
+            fetch(`https://peti-back.onrender.com/api/providers/${providerId}/subscription`, {
                 method: 'PUT'})
         const result = await completePayment(
             identificationType,
