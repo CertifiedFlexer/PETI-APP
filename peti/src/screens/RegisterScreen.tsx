@@ -14,7 +14,7 @@ import { useToast } from '../context/ToastContext';
 const PRIMARY = '#39C7fD';
 const INPUT_BG = '#f9f9f9';
 const BORDER = '#ccc';
-const API_URL = 'http://localhost:3000/api/users';
+const API_URL = 'https://peti-back.onrender.com/api/users';
 
 export default function RegisterScreen() {
     const [name, setName] = React.useState('');

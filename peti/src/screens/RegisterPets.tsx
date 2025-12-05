@@ -16,7 +16,7 @@ import { useToast } from '../context/ToastContext';
 const PRIMARY = '#39C7fD';
 const INPUT_BG = '#f9f9f9';
 const BORDER = '#ccc';
-const API_URL = 'http://localhost:3000/api/pets';
+const API_URL = 'https://peti-back.onrender.com/api/pets';
 
 type RootStackParamList = {
     Main: undefined;

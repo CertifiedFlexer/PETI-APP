@@ -48,7 +48,7 @@ export default function InsuranceScreen({ navigation }: any) {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const response = await fetch("http://localhost:3000/api/providers/service/Seguro");
+            const response = await fetch("https://peti-back.onrender.com/api/providers/service/Seguro");
             
             if (!response.ok) {
                 if (response.status === 404) {
