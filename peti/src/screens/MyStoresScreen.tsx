@@ -1,3 +1,4 @@
+// MyStoresScreen.tsx
 import { Ionicons } from "@expo/vector-icons";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -17,7 +18,6 @@ import { PromotionModal } from "../components/PromotionModal";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
-// Importar getPromotionStatus de forma segura
 let getPromotionStatus: any = null;
 try {
     const paymentsModule = require("../api/payments");
@@ -64,7 +64,6 @@ export default function MyStoresScreen({ navigation }: any) {
             console.log(`✅ Tiendas recibidas del backend: ${data.length}`);
             console.log('📦 Datos:', JSON.stringify(data, null, 2));
             
-            // Intentar obtener estado de promoción (opcional)
             if (getPromotionStatus && data.length > 0) {
                 console.log('⭐ Cargando estados de promoción...');
                 const storesWithPromotion = await Promise.all(
@@ -254,7 +253,10 @@ export default function MyStoresScreen({ navigation }: any) {
                                     ) : getPromotionStatus ? (
                                         <TouchableOpacity 
                                             style={styles.promoteButton}
-                                            onPress={() => handlePromotePress(store)}
+                                            onPress={(e) => {
+                                                e.stopPropagation();
+                                                handlePromotePress(store);
+                                            }}
                                             activeOpacity={0.8}
                                         >
                                             <Ionicons name="rocket" size={18} color="#fff" />
@@ -262,10 +264,10 @@ export default function MyStoresScreen({ navigation }: any) {
                                         </TouchableOpacity>
                                     ) : null}
 
-                                    <TouchableOpacity style={styles.viewButton}>
+                                    <View style={styles.viewButton}>
                                         <Text style={styles.viewButtonText}>Ver detalles</Text>
                                         <Ionicons name="chevron-forward" size={20} color="#39C7fD" />
-                                    </TouchableOpacity>
+                                    </View>
                                 </View>
                             </TouchableOpacity>
                         </View>
@@ -290,22 +292,22 @@ export default function MyStoresScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#F8F9FD" },
-    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: "#F8F9FD" },
-    loadingText: { marginTop: 12, fontSize: 16, color: '#666' },
-    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#E8E8E8" },
-    backButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-    headerTitle: { fontSize: 20, fontWeight: "700", color: "#1A1A1A" },
-    addButton: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-    emptyStateContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-    emptyStateTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A', marginTop: 20, marginBottom: 8, textAlign: 'center' },
-    emptyStateText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
-    registerButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#39C7fD', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12, gap: 8 },
-    registerButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    container: { flex: 1, backgroundColor: "#fff" },
+    loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fff" },
+    loadingText: { marginTop: 12, fontSize: 16, color: "#666" },
+    header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#E8E8E8" },
+    backButton: { padding: 8 },
+    headerTitle: { fontSize: 20, fontWeight: "700", color: "#1A1A1A", flex: 1, textAlign: "center" },
+    addButton: { padding: 8 },
     scrollContent: { padding: 20, paddingBottom: 40 },
-    card: { backgroundColor: "#fff", borderRadius: 16, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4, overflow: "hidden" },
-    imageContainer: { position: 'relative' },
-    cardImage: { width: "100%", height: 180, backgroundColor: "#E8E8E8" },
+    emptyStateContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40 },
+    emptyStateTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A', marginTop: 20, textAlign: 'center' },
+    emptyStateText: { fontSize: 15, color: '#666', marginTop: 8, textAlign: 'center', lineHeight: 22 },
+    registerButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#39C7fD', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, marginTop: 24, gap: 8 },
+    registerButtonText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+    card: { backgroundColor: "#fff", borderRadius: 16, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 3, overflow: "hidden" },
+    imageContainer: { position: 'relative', width: '100%', height: 180, backgroundColor: '#E8E8E8' },
+    cardImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     promotedBadgeContainer: { position: 'absolute', top: 12, right: 12 },
     cardContent: { padding: 16 },
     cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
