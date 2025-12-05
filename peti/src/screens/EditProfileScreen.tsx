@@ -10,15 +10,15 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { updateUserProfile } from "../api/user";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
 const PRIMARY = "#39C7fD";
 const BORDER = "#ccc";
-const API_URL = "http://localhost:3000/api/users";
 
 export default function EditProfileScreen({ navigation }: any) {
-    const { user, updateUser } = useAuth();
+    const { user, token, updateUser } = useAuth();
     const { showSuccess, showError, showWarning } = useToast();
 
     const [name, setName] = useState(user?.name || "");
@@ -26,25 +26,29 @@ export default function EditProfileScreen({ navigation }: any) {
     const [loading, setLoading] = useState(false);
 
     const validate = () => {
+        console.log('🔍 Validando campos:');
+        console.log('  - Nombre:', name, '| Válido:', !!name.trim());
+        console.log('  - Email:', email, '| Válido:', !!email.trim());
+
         if (!name.trim()) {
-            showWarning("Por favor ingresa tu nombre");
+            showWarning('Por favor ingresa tu nombre');
             return false;
         }
 
         if (!email.trim()) {
-            showWarning("Por favor ingresa tu email");
+            showWarning('Por favor ingresa tu email');
             return false;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            showError("El formato del email es inválido");
+            showError('El formato del email es inválido');
             return false;
         }
 
         // Validar si realmente hubo cambios
         if (name === user?.name && email === user?.email) {
-            showWarning("No has realizado ningún cambio");
+            showWarning('No has realizado ningún cambio');
             return false;
         }
 
@@ -52,38 +56,38 @@ export default function EditProfileScreen({ navigation }: any) {
     };
 
     const handleSave = async () => {
-        if (!validate()) return;
-
-        if (!user?.userId) {
-            showError("No se pudo identificar el usuario");
+        console.log('📝 Iniciando actualización de perfil...');
+        
+        if (!validate()) {
+            console.log('❌ Validación falló');
             return;
         }
 
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_URL}/${user.userId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    nombre: name,
-                    email: email,
-                }),
-            });
+        if (!user?.userId) {
+            showError('No se pudo identificar el usuario. Inicia sesión nuevamente');
+            return;
+        }
 
-            if (!response.ok) {
-                const errorData = (await response.json()) as { message?: string };
-                
-                if (response.status === 400) {
-                    showError(errorData.message || "Datos inválidos");
-                } else if (response.status === 409) {
-                    showError("Este email ya está en uso");
-                } else if (response.status === 404) {
-                    showError("Usuario no encontrado");
-                } else {
-                    showError(errorData.message || "Error al actualizar perfil");
-                }
-                return;
-            }
+        if (!token) {
+            showError('No se pudo verificar tu sesión. Inicia sesión nuevamente');
+            return;
+        }
+
+        console.log('✅ Validación pasó');
+        setLoading(true);
+        
+        try {
+            const updateData = {
+                id_usuario: user.userId,
+                ...(name !== user?.name && { nombre: name }),
+                ...(email !== user?.email && { email: email })
+            };
+
+            console.log('📤 Enviando datos:', updateData);
+
+            const response = await updateUserProfile(updateData, token);
+
+            console.log('✅ Respuesta del servidor:', response);
 
             // Actualizar contexto con nuevos datos
             await updateUser({
@@ -91,7 +95,7 @@ export default function EditProfileScreen({ navigation }: any) {
                 email: email,
             });
 
-            showSuccess("Perfil actualizado correctamente");
+            showSuccess('Perfil actualizado correctamente');
             
             // Volver a la pantalla anterior después de un pequeño delay
             setTimeout(() => {
@@ -99,15 +103,18 @@ export default function EditProfileScreen({ navigation }: any) {
             }, 1500);
 
         } catch (error: any) {
-            console.error("Error updating profile:", error);
+            console.error('❌ Error en actualización:', error);
             
             if (error.message === 'Network request failed' || error.message.includes('fetch')) {
-                showError("Error de conexión. Verifica tu internet");
+                showError('Error de conexión. Verifica tu internet');
+            } else if (error.message.includes('timeout')) {
+                showError('La solicitud tardó demasiado. Intenta de nuevo');
             } else {
-                showError(error.message || "No se pudo actualizar el perfil");
+                showError(error.message || 'No se pudo actualizar el perfil');
             }
         } finally {
             setLoading(false);
+            console.log('🏁 Proceso finalizado');
         }
     };
 
