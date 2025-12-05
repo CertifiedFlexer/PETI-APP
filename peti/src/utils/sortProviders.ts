@@ -7,7 +7,7 @@ export interface ProviderWithPromotion {
     telefono: string;
     email: string;
     descripcion: string;
-    image: string;
+    image_url: string;
     puntuacion: number;
     direccion: string;
     promotion?: PromotionStatus;

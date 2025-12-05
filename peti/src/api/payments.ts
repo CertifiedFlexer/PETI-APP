@@ -30,16 +30,13 @@ const MOCK_PSE_BANKS: PSEBank[] = [
 const PROMOTION_PLANS: PromotionPlan[] = [
     {
         id: 'top10-monthly',
-        name: 'Top 10 Mensual',
         tier: 'top10',
         duration_days: 30,
         price: 0, // Gratis para desarrollo
         currency: 'COP',
         features: [
-            'Aparece en los primeros 10 resultados',
             'Badge de "Promocionado"',
             'Mayor visibilidad',
-            'Estadísticas de vistas',
         ],
         popular: true,
     },

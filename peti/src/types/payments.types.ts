@@ -11,7 +11,6 @@ export type PaymentMethod = 'pse';
 
 export interface PromotionPlan {
     id: string;
-    name: string;
     tier: PromotionTier;
     duration_days: number;
     price: number;
