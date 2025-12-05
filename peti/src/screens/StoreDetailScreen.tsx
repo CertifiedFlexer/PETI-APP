@@ -154,7 +154,6 @@ export default function StoreDetailScreen({ route, navigation }: any) {
         setIsSaving(true);
         try {
             const updated = await updateStore(
-                store.id_proveedor,
                 {
                     nombre_negocio: editedStore.nombre_negocio,
                     tipo_servicio: editedStore.tipo_servicio,
@@ -162,6 +161,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
                     email: editedStore.email,
                     descripcion: editedStore.descripcion,
                     direccion: editedStore.direccion,
+                    id_proveedor: store.id_proveedor
                 },
                 token
             );
@@ -206,7 +206,7 @@ export default function StoreDetailScreen({ route, navigation }: any) {
 
         setIsUploadingImage(true);
         try {
-            const updatedStore = await updateStoreImage(store.id_proveedor, imageUri, token);
+            const updatedStore = await updateStoreImage(store.id_proveedor, imageUri, token) as Store;
             
             setStore(updatedStore);
             setEditedStore(updatedStore);

@@ -15,6 +15,7 @@ export interface Store {
 }
 
 export interface UpdateStoreData {
+    id_proveedor: string;
     nombre_negocio?: string;
     tipo_servicio?: string;
     telefono?: string;
@@ -95,18 +96,17 @@ export const getUserStores = async (userId: string, token: string): Promise<Stor
 };
 
 export const updateStore = async (
-    storeId: string,
     data: UpdateStoreData,
     token: string
 ): Promise<Store> => {
     console.log('🔄 updateStore - Iniciando...');
 
-    if (!storeId || !token) {
+    if ( !token) {
         throw new Error("storeId y token son requeridos");
     }
 
     try {
-        const response = await fetch(`${API_URL}/api/providers/${storeId}`, {
+        const response = await fetch(`${API_URL}/api/providers/${data.id_proveedor}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
